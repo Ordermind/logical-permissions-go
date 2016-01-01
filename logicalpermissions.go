@@ -1,5 +1,9 @@
 package logicalpermissions
 
+import (
+  "fmt" 
+)
+
 type LogicalPermissions struct {
   types map[string]func(string, map[string]interface{}) bool
   bypass_callback func(map[string]interface{}) bool
@@ -15,16 +19,29 @@ func (this *LogicalPermissions) AddType(name string, callback func(string, map[s
   return nil
 }
 
-func (this *LogicalPermissions) RemoveType(name string) {
-  
+func (this *LogicalPermissions) RemoveType(name string) error {
+  if name == "" {
+    return &InvalidArgumentValueError{"The name parameter cannot be empty."}  
+  }
+  exists, _ := this.TypeExists(name)
+  if(!exists) {
+    return &PermissionTypeNotRegisteredError{fmt.Sprintf("The permission type \"%s\" has not been registered. Please use LogicalPermissions::AddType() or LogicalPermissions::SetTypes() to register permission types.", name)}  
+  }
+  types := this.GetTypes()
+  delete(types, name)
+  this.SetTypes(types)
+  return nil
 }
 
-func (this *LogicalPermissions) TypeExists(name string) bool {
+func (this *LogicalPermissions) TypeExists(name string) (bool, error) {
+  if name == "" {
+    return false, &InvalidArgumentValueError{"The name parameter cannot be empty."}
+  }
   types := this.GetTypes()
   if _, ok := types[name]; ok {
-    return true
+    return true, nil
   }
-  return false
+  return false, nil
 }
 
 func (this *LogicalPermissions) GetTypeCallback(name string) func(string, map[string]interface{}) bool {

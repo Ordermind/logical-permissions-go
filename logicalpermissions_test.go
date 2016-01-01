@@ -77,3 +77,29 @@ func TestRemoveType(t *testing.T) {
   }
   assert.False(t, exists)
 }
+
+/*-------------LogicalPermissions::TypeExists()--------------*/
+
+func TestTypeExistsParamNameEmpty(t *testing.T) {
+  t.Parallel()
+  lp := LogicalPermissions{}
+  _, err := lp.TypeExists("")
+  if assert.Error(t, err) {
+    assert.IsType(t, &InvalidArgumentValueError{}, err)
+  }
+}
+
+func TestTypeExists(t *testing.T) {
+  t.Parallel()
+  lp := LogicalPermissions{}
+  err := lp.AddType("test", func(string, map[string]interface{}) bool {return true})
+  if err != nil {
+    t.Error(fmt.Sprintf("LogicalPermissions::AddType() returned an error: %s", err))
+  }
+  exists, err2 := lp.TypeExists("test")
+  if err2 != nil {
+    t.Error(fmt.Sprintf("LogicalPermissions::TypeExists() returned an error: %s", err2))
+  }
+  assert.True(t, exists)
+}
+

@@ -5,8 +5,8 @@ type LogicalPermissionsInterface interface {
   RemoveType(name string)
   TypeExists(name string) bool
   GetTypeCallback(name string) func(string, map[string]interface{}) bool
-  GetTypes() map[string]interface{}
-  SetTypes(types map[string]interface{})
+  GetTypes() map[string]func(string, map[string]interface{}) bool
+  SetTypes(types map[string]func(string, map[string]interface{}) bool)
   GetBypassCallback() func(map[string]interface{}) bool
   SetBypassCallback(callback func(map[string]interface{}) bool)
   CheckAccess(permissions map[string]interface{}, context map[string]interface{}) bool

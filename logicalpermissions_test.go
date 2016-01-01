@@ -20,7 +20,8 @@ func TestCreation(t *testing.T) {
 func TestAddTypeParamNameEmpty(t *testing.T) {
   t.Parallel()
   lp := LogicalPermissions{}
-  err := lp.AddType("", func(string, map[string]interface{}) bool {return true})
+  type_callback := func(string, map[string]interface{}) bool {return true}
+  err := lp.AddType("", &type_callback)
   if assert.Error(t, err) {
      assert.IsType(t, &InvalidArgumentValueError{}, err)
   }
@@ -29,7 +30,8 @@ func TestAddTypeParamNameEmpty(t *testing.T) {
 func TestAddType(t *testing.T) {
   t.Parallel()
   lp := LogicalPermissions{}
-  err := lp.AddType("test", func(string, map[string]interface{}) bool {return true})
+  type_callback := func(string, map[string]interface{}) bool {return true}
+  err := lp.AddType("test", &type_callback)
   if err != nil {
     t.Error(fmt.Sprintf("LogicalPermissions::AddType() returned an error: %s", err))
   }
@@ -63,7 +65,8 @@ func TestRemoveTypeUnregisteredType(t *testing.T) {
 func TestRemoveType(t *testing.T) {
   t.Parallel()
   lp := LogicalPermissions{}
-  err := lp.AddType("test", func(string, map[string]interface{}) bool {return true})
+  type_callback := func(string, map[string]interface{}) bool {return true}
+  err := lp.AddType("test", &type_callback)
   if err != nil {
     t.Error(fmt.Sprintf("LogicalPermissions::AddType() returned an error: %s", err))
   }
@@ -92,7 +95,8 @@ func TestTypeExistsParamNameEmpty(t *testing.T) {
 func TestTypeExists(t *testing.T) {
   t.Parallel()
   lp := LogicalPermissions{}
-  err := lp.AddType("test", func(string, map[string]interface{}) bool {return true})
+  type_callback := func(string, map[string]interface{}) bool {return true}
+  err := lp.AddType("test", &type_callback)
   if err != nil {
     t.Error(fmt.Sprintf("LogicalPermissions::AddType() returned an error: %s", err))
   }
@@ -101,5 +105,41 @@ func TestTypeExists(t *testing.T) {
     t.Error(fmt.Sprintf("LogicalPermissions::TypeExists() returned an error: %s", err2))
   }
   assert.True(t, exists)
+}
+
+/*-------------LogicalPermissions::GetTypeCallback()--------------*/
+
+func TestGetTypeCallbackParamNameEmpty(t *testing.T) {
+  t.Parallel()
+  lp := LogicalPermissions{}
+  _, err := lp.GetTypeCallback("")
+  if assert.Error(t, err) {
+    assert.IsType(t, &InvalidArgumentValueError{}, err)
+  }
+}
+
+func TestGetTypeCallbackUnregisteredType(t *testing.T) {
+  t.Parallel()
+  lp := LogicalPermissions{}
+  _, err := lp.GetTypeCallback("test")
+  if assert.Error(t, err) {
+    assert.IsType(t, &PermissionTypeNotRegisteredError{}, err)
+  }
+}
+
+func TestGetTypeCallback(t *testing.T) {
+  t.Parallel()
+  lp := LogicalPermissions{}
+  callback1 := func(string, map[string]interface{}) bool {return true}
+  err := lp.AddType("test", &callback1)
+  if err != nil {
+    t.Error(fmt.Sprintf("LogicalPermissions::AddType() returned an error: %s", err))
+  }
+  cb2_addr, err2 := lp.GetTypeCallback("test")
+  if err2 != nil {
+    t.Error(fmt.Sprintf("LogicalPermissions::GetTypeCallback() returned an error: %s", err2))
+  }
+  cb1_addr := &callback1
+  assert.True(t, cb1_addr == cb2_addr) //assert.Equal() returns false here for some reason
 }
 

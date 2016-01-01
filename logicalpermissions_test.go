@@ -11,5 +11,8 @@ func TestCreation(t *testing.T) {
   lp := LogicalPermissions{}
   var i interface{} = &lp
   _, ok := i.(LogicalPermissionsInterface)
-  assert.True(t, ok)
+  assert.True(t, ok, "LogicalPermissions is not implementing LogicalPermissionsInterface correctly.")
 }
+
+/*-----------LogicalPermissions::AddType()-------------*/
+

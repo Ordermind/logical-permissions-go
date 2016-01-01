@@ -1,7 +1,7 @@
 package logicalpermissions
 
 type LogicalPermissionsInterface interface {
-  AddType(name string, callback func(string, map[string]interface{}) bool)
+  AddType(name string, callback func(string, map[string]interface{}) bool) error
   RemoveType(name string)
   TypeExists(name string) bool
   GetTypeCallback(name string) func(string, map[string]interface{}) bool

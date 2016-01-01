@@ -5,8 +5,11 @@ type LogicalPermissions struct {
   bypass_callback func(map[string]interface{}) bool
 }
 
-func (this *LogicalPermissions) AddType(name string, callback func(string, map[string]interface{}) bool) {
-  
+func (this *LogicalPermissions) AddType(name string, callback func(string, map[string]interface{}) bool) error {
+  if name == "" {
+    return &InvalidArgumentValueError{"The name parameter cannot be empty."}  
+  }
+  return nil
 }
 
 func (this *LogicalPermissions) RemoveType(name string) {

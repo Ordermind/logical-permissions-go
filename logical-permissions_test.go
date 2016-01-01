@@ -7,7 +7,7 @@ import (
 
 func TestCreation(t *testing.T) {
   lp := LogicalPermissions{}
-  var i interface{} = &lp
+  var i interface{} = lp
   _, ok := i.(LogicalPermissionsInterface)
   assert.True(t, ok)
 }

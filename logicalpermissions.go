@@ -5,11 +5,11 @@ import (
 )
 
 type LogicalPermissions struct {
-  types map[string]*func(string, map[string]interface{}) bool
-  bypass_callback *func(map[string]interface{}) bool
+  types map[string]func(string, map[string]interface{}) bool
+  bypass_callback func(map[string]interface{}) bool
 }
 
-func (this *LogicalPermissions) AddType(name string, callback *func(string, map[string]interface{}) bool) error {
+func (this *LogicalPermissions) AddType(name string, callback func(string, map[string]interface{}) bool) error {
   if name == "" {
     return &InvalidArgumentValueError{"The name parameter cannot be empty."}  
   }
@@ -44,34 +44,34 @@ func (this *LogicalPermissions) TypeExists(name string) (bool, error) {
   return false, nil
 }
 
-func (this *LogicalPermissions) GetTypeCallback(name string) (*func(string, map[string]interface{}) bool, error) {
+func (this *LogicalPermissions) GetTypeCallback(name string) (func(string, map[string]interface{}) bool, error) {
   if name == "" {
     return nil, &InvalidArgumentValueError{"The name parameter cannot be empty."}
   }
   exists, _ := this.TypeExists(name)
   if(!exists) {
-    return nil, &PermissionTypeNotRegisteredError{fmt.Sprintf("The permission type \"%s\" has not been registered. Please use LogicalPermissions::AddType() or LogicalPermissions::SetTypes() to register permission types.", name)}  
+    return nil, &PermissionTypeNotRegisteredError{fmt.Sprintf("The permission type \"%s\" has not been registered. Please use LogicalPermissions::AddType() or LogicalPermissions::SetTypes() to register permission types.", name)}
   }
   types := this.GetTypes()
   return types[name], nil
 }
 
-func (this *LogicalPermissions) GetTypes() map[string]*func(string, map[string]interface{}) bool {
+func (this *LogicalPermissions) GetTypes() map[string]func(string, map[string]interface{}) bool {
   if this.types == nil {
-    this.types = make(map[string]*func(string, map[string]interface{}) bool)
+    this.types = make(map[string]func(string, map[string]interface{}) bool)
   }
   return this.types
 }
 
-func (this *LogicalPermissions) SetTypes(types map[string]*func(string, map[string]interface{}) bool) {
+func (this *LogicalPermissions) SetTypes(types map[string]func(string, map[string]interface{}) bool) {
   this.types = types
 }
 
-func (this *LogicalPermissions) GetBypassCallback() *func(map[string]interface{}) bool {
+func (this *LogicalPermissions) GetBypassCallback() func(map[string]interface{}) bool {
   return this.bypass_callback
 }
 
-func (this *LogicalPermissions) SetBypassCallback(callback *func(map[string]interface{}) bool) {
+func (this *LogicalPermissions) SetBypassCallback(callback func(map[string]interface{}) bool) {
   
 }
 

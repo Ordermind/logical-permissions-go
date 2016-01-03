@@ -89,7 +89,7 @@ func (this *LogicalPermissions) SetBypassCallback(callback func(map[string]inter
   this.bypass_callback = callback
 }
 
-func (this *LogicalPermissions) CheckAccess(permissions map[string]interface{}, context map[string]interface{}) bool {
+func (this *LogicalPermissions) CheckAccess(permissions map[string]interface{}, context map[string]interface{}) (bool, error) {
   access := false
-  return access
+  return access, nil
 }

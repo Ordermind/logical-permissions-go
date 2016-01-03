@@ -3,6 +3,7 @@ package logicalpermissions
 import (
   "fmt"
   "encoding/json"
+  "strconv"
 )
 
 type LogicalPermissions struct {
@@ -126,6 +127,101 @@ func (this *LogicalPermissions) CheckAccess(json_permissions string, context map
         }
       }
     }
+  }
+  return access, nil
+}
+
+func (this *LogicalPermissions) dispatch(permissions interface{}, type string, context map[string]interface{}) (bool, error) {
+  access := false
+  err := make(error)
+  switch permissions.(type) {
+    case string:
+      access, err = externalAccessCheck(permissions, type, context)
+      if err != nil {
+        return false, &InvalidArgumentValueError(fmt.Sprintf("%s", err))
+      }
+    case []interface{}:
+      if len(permissions) > 0 {
+        access, err = this.processOR(permissions, type, context) 
+        if err != nil {
+          return false, &InvalidArgumentValueError(fmt.Sprintf("%s", err))
+        }
+      }
+    case map[string]interface{}:
+      if len(permissions) == 1 {
+        key := ""
+        for k, _ := range permissions {
+          key = k
+          break
+        }
+        value := permissions[key]
+        if key == "AND" {
+          access, err = this.processAND(value, type, context)
+          if err != nil {
+            return false, &InvalidArgumentValueError(fmt.Sprintf("%s", err))
+          }
+        }
+        else if key == "NAND" {
+          access, err = this.processNAND(value, type, context)
+          if err != nil {
+            return false, &InvalidArgumentValueError(fmt.Sprintf("%s", err))
+          }
+        }
+        else if key == "OR" {
+          access, err = this.processOR(value, type, context)
+          if err != nil {
+            return false, &InvalidArgumentValueError(fmt.Sprintf("%s", err))
+          }
+        }
+        else if key == "NOR" {
+          access, err = this.processNOR(value, type, context)
+          if err != nil {
+            return false, &InvalidArgumentValueError(fmt.Sprintf("%s", err))
+          }
+        }
+        else if key == "XOR" {
+          access, err = this.processXOR(value, type, context)
+          if err != nil {
+            return false, &InvalidArgumentValueError(fmt.Sprintf("%s", err))
+          }
+        }
+        else if key == "NOT" {
+          access, err = this.processNOT(value, type, context)
+          if err != nil {
+            return false, &InvalidArgumentValueError(fmt.Sprintf("%s", err))
+          }
+        }
+        else {
+          if _, err2 := strconv.Atoi(v); err2 == nil {
+            if type == nil {
+              type = key 
+            }
+            else {
+              return false, &InvalidArgumentValueError(fmt.Sprintf("You cannot put a permission type as a descendant to another permission type. Existing type: %s. Evaluated permissions: %v", type, permissions))
+            }
+          }
+          if value.(type) == []interface{} || value.(type) == map[string]interface{} {
+            access, err = this.processOR(value, type, context)
+            if err != nil {
+              return false, &InvalidArgumentValueError(fmt.Sprintf("%s", err))
+            }
+          }
+          else {
+            access, err = this.dispatch(value, type, context)
+            if err != nil {
+              return false, &InvalidArgumentValueError(fmt.Sprintf("%s", err))
+            }
+          }
+        }
+      }s
+      else if len(permissions) > 1 {
+        access, err = this.processOR(permissions, type, context) 
+        if err != nil {
+          return false, &InvalidArgumentValueError(fmt.Sprintf("%s", err))
+        }
+      }
+    default:
+      return false, &InvalidArgumentValueError(fmt.Sprintf("A permission value must either be a string, an array or an object. Evaluated permissions: %v", permissions))
   }
   return access, nil
 }

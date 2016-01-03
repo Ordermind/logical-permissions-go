@@ -165,4 +165,35 @@ func TestGetTypes(t *testing.T) {
   }
 }
 
+/*-------------LogicalPermissions::SetTypes()--------------*/
 
+func TestSetTypesParamNameEmpty(t *testing.T) {
+  t.Parallel()
+  lp := LogicalPermissions{}
+  callback := func(string, map[string]interface{}) bool {
+    return true
+  }
+  types := map[string]func(string, map[string]interface{}) bool{"": callback}
+  err := lp.SetTypes(types)
+  if assert.Error(t, err) {
+    assert.IsType(t, &InvalidArgumentValueError{}, err)
+  }
+}
+
+func TestSetTypes(t *testing.T) {
+  t.Parallel()
+  lp := LogicalPermissions{}
+  callback := func(string, map[string]interface{}) bool {
+    return true
+  }
+  types := map[string]func(string, map[string]interface{}) bool{"test": callback}
+  err := lp.SetTypes(types)
+  if err != nil {
+    t.Error(fmt.Sprintf("LogicalPermissions::SetTypes() returned an error: %s", err))
+  }
+  assert.Equal(t, fmt.Sprintf("%v", types), fmt.Sprintf("%v", lp.GetTypes()))
+  types["test2"] = callback
+  if _, ok := lp.GetTypes()["test2"]; ok {
+    t.Error("lp.GetTypes() contains \"test2\" key")
+  }
+}

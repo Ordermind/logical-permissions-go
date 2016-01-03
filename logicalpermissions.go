@@ -61,14 +61,24 @@ func (this *LogicalPermissions) GetTypes() map[string]func(string, map[string]in
     this.types = make(map[string]func(string, map[string]interface{}) bool)
   }
   types := make(map[string]func(string, map[string]interface{}) bool)
-  for k, v := range this.types {
-    types[k] = v
+  for name, callback := range this.types {
+    types[name] = callback
   }
   return types
 }
 
-func (this *LogicalPermissions) SetTypes(types map[string]func(string, map[string]interface{}) bool) {
-  this.types = types
+func (this *LogicalPermissions) SetTypes(types map[string]func(string, map[string]interface{}) bool) error {
+  for name, _ := range types {
+    if name == "" {
+      return &InvalidArgumentValueError{"The name parameter cannot be empty."}
+    }
+  }
+
+  this.types = make(map[string]func(string, map[string]interface{}) bool)
+  for name, callback := range types {
+    this.types[name] = callback
+  }
+  return nil
 }
 
 func (this *LogicalPermissions) GetBypassCallback() func(map[string]interface{}) bool {

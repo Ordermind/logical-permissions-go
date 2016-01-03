@@ -197,3 +197,11 @@ func TestSetTypes(t *testing.T) {
     t.Error("lp.GetTypes() contains \"test2\" key")
   }
 }
+
+/*-------------LogicalPermissions::GetBypassCallback()--------------*/
+
+func TestGetBypassCallback(t *testing.T) {
+  t.Parallel()
+  lp := LogicalPermissions{}
+  assert.Nil(t, lp.GetBypassCallback())
+}

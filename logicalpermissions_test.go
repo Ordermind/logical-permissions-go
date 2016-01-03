@@ -205,3 +205,16 @@ func TestGetBypassCallback(t *testing.T) {
   lp := LogicalPermissions{}
   assert.Nil(t, lp.GetBypassCallback())
 }
+
+/*-------------LogicalPermissions::SetBypassCallback()--------------*/
+
+func TestSetBypassCallback(t *testing.T) {
+  t.Parallel()
+  lp := LogicalPermissions{}
+  callback := func(map[string]interface{}) bool {
+    return true
+  }
+  lp.SetBypassCallback(callback)
+  assert.Equal(t, fmt.Sprintf("%v", callback), fmt.Sprintf("%v", lp.GetBypassCallback()))
+}
+

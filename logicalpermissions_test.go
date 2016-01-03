@@ -141,6 +141,28 @@ func TestGetTypeCallback(t *testing.T) {
   if err2 != nil {
     t.Error(fmt.Sprintf("LogicalPermissions::GetTypeCallback() returned an error: %s", err2))
   }
-  assert.True(t, callback2("test", make(map[string]interface{})))
+  assert.Equal(t, fmt.Sprintf("%v", callback1), fmt.Sprintf("%v", callback2))
 }
+
+/*-------------LogicalPermissions::GetTypes()--------------*/
+
+func TestGetTypes(t *testing.T) {
+  t.Parallel()
+  lp := LogicalPermissions{}
+  assert.Equal(t, lp.GetTypes(), make(map[string]func(string, map[string]interface{}) bool))
+  callback := func(string, map[string]interface{}) bool {
+    return true
+  }
+  err := lp.AddType("test", callback)
+  if err != nil {
+    t.Error(fmt.Sprintf("LogicalPermissions::AddType() returned an error: %s", err))
+  }
+  types := lp.GetTypes()
+  assert.Equal(t, fmt.Sprintf("%v", map[string]func(string, map[string]interface{}) bool{"test": callback}), fmt.Sprintf("%v", types))
+  types["test2"] = callback
+  if _, ok := lp.GetTypes()["test2"]; ok {
+    t.Error("lp.GetTypes() contains \"test2\" key")
+  }
+}
+
 

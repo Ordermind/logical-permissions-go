@@ -60,7 +60,11 @@ func (this *LogicalPermissions) GetTypes() map[string]func(string, map[string]in
   if this.types == nil {
     this.types = make(map[string]func(string, map[string]interface{}) bool)
   }
-  return this.types
+  types := make(map[string]func(string, map[string]interface{}) bool)
+  for k, v := range this.types {
+    types[k] = v
+  }
+  return types
 }
 
 func (this *LogicalPermissions) SetTypes(types map[string]func(string, map[string]interface{}) bool) {

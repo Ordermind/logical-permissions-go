@@ -1,7 +1,8 @@
 package logicalpermissions
 
 import (
-  "fmt" 
+  "fmt"
+  "encoding/json"
 )
 
 type LogicalPermissions struct {
@@ -89,7 +90,42 @@ func (this *LogicalPermissions) SetBypassCallback(callback func(map[string]inter
   this.bypass_callback = callback
 }
 
-func (this *LogicalPermissions) CheckAccess(permissions map[string]interface{}, context map[string]interface{}) (bool, error) {
+func (this *LogicalPermissions) CheckAccess(json_permissions string, context map[string]interface{}) (bool, error) {
   access := false
+  allow_bypass := false
+  var permissions map[string]interface{}
+  err := json.Unmarshal([]byte(json_permissions), &permissions)
+  if err != nil {
+    return false, &InvalidArgumentValueError{fmt.Sprintf("Error in parsing json_permissions: %s", err)}
+  }
+  if val, ok := permissions["no_bypass"]; ok {
+    switch val.(type) {
+      case bool:
+        allow_bypass = !permissions["no_bypass"]
+      case map[string]interface{}:
+        allow_bypass, err = !this.processOR(permissions.no_bypass, nil, context)
+        if err != nil {
+          return false, &InvalidArgumentValueError(fmt.Sprintf("Error parsing no_bypass object: %s", err))
+        }
+      default:
+        return false, &InvalidArgumentValueError{fmt.Sprintf("The no_bypass value must be a boolean or a json object. Current value: %v", val)}
+    }
+    delete(permissions["no_bypass"])
+    
+    if allow_bypass {
+    access, err = this.checkBypassAccess(context)
+      if err != nil {
+        return false, &InvalidArgumentValueError(fmt.Sprintf("Error checking bypass access: %s", err))
+      }
+    }
+    if !access {
+      if len(permissions) > 0 {
+        access, err = this.processOR(permissions, nil, context)
+        if err != nil {
+          return false, &InvalidArgumentValueError(fmt.Sprintf("Error checking access: %s", err))
+        }
+      }
+    }
+  }
   return access, nil
 }

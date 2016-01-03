@@ -9,5 +9,5 @@ type LogicalPermissionsInterface interface {
   SetTypes(types map[string]func(string, map[string]interface{}) bool) error
   GetBypassCallback() func(map[string]interface{}) bool
   SetBypassCallback(callback func(map[string]interface{}) bool)
-  CheckAccess(permissions map[string]interface{}, context map[string]interface{}) (bool, error)
+  CheckAccess(json_permissions string, context map[string]interface{}) (bool, error)
 } 

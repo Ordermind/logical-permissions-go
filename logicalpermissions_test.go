@@ -4,6 +4,7 @@ import (
   "fmt"
   "testing"
   "github.com/stretchr/testify/assert"
+  . "github.com/MakeNowJust/heredoc/dot"
   . "github.com/ordermind/logical-permissions-go"
 )
 
@@ -216,5 +217,35 @@ func TestSetBypassCallback(t *testing.T) {
   }
   lp.SetBypassCallback(callback)
   assert.Equal(t, fmt.Sprintf("%v", callback), fmt.Sprintf("%v", lp.GetBypassCallback()))
+}
+
+/*-------------LogicalPermissions::CheckAccess()--------------*/
+
+func TestTemp(t *testing.T) {
+  t.Parallel()
+  lp := LogicalPermissions{}
+  permissions := D(`
+  {
+    "no_bypass": "hej",
+    "role": [
+      "admin",
+      {
+        "AND": [
+          "editor",
+          "writer",
+          {
+            "OR": [
+              "role1",
+              "role2"
+            ]
+          }
+        ]
+      }
+    ]
+  }
+  `)
+  access, err := lp.CheckAccess(permissions, make(map[string]interface{}))
+  println("access:", access)
+  println(fmt.Sprintf("errors: %v", err))
 }
 

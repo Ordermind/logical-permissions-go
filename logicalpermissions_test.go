@@ -568,3 +568,84 @@ func TestCheckAccessNoBypassAccessJSONDeny(t *testing.T) {
   assert.False(t, access)
   assert.Nil(t, err)
 }
+
+func TestCheckAccessSingleItemAllow(t *testing.T) {
+  t.Parallel()
+  lp := LogicalPermissions{}
+  types := map[string]func(string, map[string]interface{}) (bool, error){
+    "flag": func(flag string, context map[string]interface{}) (bool, error) {
+      if flag == "testflag" {
+        user, ok := context["user"]
+        if !ok {
+          return false, nil 
+        }
+        if typed_user, ok := user.(map[string]interface{}); ok {
+          testflag, ok := typed_user["testflag"]
+          if !ok {
+            return false, nil 
+          }
+          if bool_never_bypass, ok := testflag.(bool); ok {
+            access := bool_never_bypass
+            return access, nil
+          }
+        }
+      }
+      return false, nil
+    },
+  }
+  err := lp.SetTypes(types)
+  assert.Nil(t, err)
+  permissions := D(`{
+    "no_bypass": {
+      "flag": "never_bypass"
+    },
+    "flag": "testflag"
+  }`)
+  user := map[string]interface{}{
+    "id": 1,
+    "testflag": true,
+  }
+  access, err := lp.CheckAccess(permissions, map[string]interface{}{"user": user})
+  assert.True(t, access)
+  assert.Nil(t, err)
+}
+
+func TestCheckAccessSingleItemDeny(t *testing.T) {
+  t.Parallel()
+  lp := LogicalPermissions{}
+  types := map[string]func(string, map[string]interface{}) (bool, error){
+    "flag": func(flag string, context map[string]interface{}) (bool, error) {
+      if flag == "testflag" {
+        user, ok := context["user"]
+        if !ok {
+          return false, nil 
+        }
+        if typed_user, ok := user.(map[string]interface{}); ok {
+          testflag, ok := typed_user["testflag"]
+          if !ok {
+            return false, nil 
+          }
+          if bool_never_bypass, ok := testflag.(bool); ok {
+            access := bool_never_bypass
+            return access, nil
+          }
+        }
+      }
+      return false, nil
+    },
+  }
+  err := lp.SetTypes(types)
+  assert.Nil(t, err)
+  permissions := D(`{
+    "no_bypass": {
+      "flag": "never_bypass"
+    },
+    "flag": "testflag"
+  }`)
+  user := map[string]interface{}{
+    "id": 1,
+  }
+  access, err := lp.CheckAccess(permissions, map[string]interface{}{"user": user})
+  assert.False(t, access)
+  assert.Nil(t, err)
+}

@@ -243,6 +243,18 @@ func TestCheckAccessParamPermissionsWrongPermissionType(t *testing.T) {
   if assert.Error(t, err) {
     assert.IsType(t, &InvalidArgumentValueError{}, err)
   }
+  
+  callback := func(map[string]interface{}) (bool, error) {
+    return true, nil
+  }
+  func_permissions := map[string]interface{}{
+    "test": callback, 
+  }
+  access, err = lp.CheckAccess(func_permissions, make(map[string]interface{}))
+  assert.False(t, access)
+  if assert.Error(t, err) {
+    assert.IsType(t, &InvalidArgumentValueError{}, err)
+  }
 }
 
 func TestCheckAccessParamPermissionsNestedTypes(t *testing.T) {

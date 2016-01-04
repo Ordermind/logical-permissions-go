@@ -225,3 +225,31 @@ func (this *LogicalPermissions) dispatch(permissions interface{}, type string, c
   }
   return access, nil
 }
+
+func (this *LogicalPermissions) processAND(permissions interface{}, type string, context map[string]interface{}) (bool, error) {
+  
+}
+
+func (this *LogicalPermissions) processNAND(permissions interface{}, type string, context map[string]interface{}) (bool, error) {
+  
+}
+
+func (this *LogicalPermissions) processOR(permissions interface{}, type string, context map[string]interface{}) (bool, error) {
+  
+}
+
+func (this *LogicalPermissions) processNOR(permissions interface{}, type string, context map[string]interface{}) (bool, error) {
+  
+}
+
+func (this *LogicalPermissions) processXOR(permissions interface{}, type string, context map[string]interface{}) (bool, error) {
+  
+}
+
+func (this *LogicalPermissions) processNOT(permissions interface{}, type string, context map[string]interface{}) (bool, error) {
+  
+}
+
+func (this *LogicalPermissions) externalAccessCheck(permission string, type string, context map[string]interface{}) (bool, error) {
+  
+}

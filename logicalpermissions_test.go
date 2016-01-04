@@ -8,6 +8,15 @@ import (
   . "github.com/ordermind/logical-permissions-go"
 )
 
+func stringInSlice(a string, list []string) bool {
+  for _, b := range list {
+    if b == a {
+      return true
+    }
+  }
+  return false
+}
+
 func TestCreation(t *testing.T) {
   t.Parallel()
   lp := LogicalPermissions{}
@@ -647,5 +656,182 @@ func TestCheckAccessSingleItemDeny(t *testing.T) {
   }
   access, err := lp.CheckAccess(permissions, map[string]interface{}{"user": user})
   assert.False(t, access)
+  assert.Nil(t, err)
+}
+
+func TestCheckAccessMultipleTypesShorthandOR(t *testing.T) {
+  t.Parallel()
+  lp := LogicalPermissions{}
+  types := map[string]func(string, map[string]interface{}) (bool, error){
+    "flag": func(flag string, context map[string]interface{}) (bool, error) {
+      if flag == "testflag" {
+        user, ok := context["user"]
+        if !ok {
+          return false, nil 
+        }
+        if typed_user, ok := user.(map[string]interface{}); ok {
+          testflag, ok := typed_user["testflag"]
+          if !ok {
+            return false, nil 
+          }
+          if bool_never_bypass, ok := testflag.(bool); ok {
+            access := bool_never_bypass
+            return access, nil
+          }
+        }
+      }
+      return false, nil
+    },
+    "role": func(role string, context map[string]interface{}) (bool, error) {
+      user, ok := context["user"]
+      if !ok {
+        return false, nil 
+      }
+      if typed_user, ok := user.(map[string]interface{}); ok {
+        roles, ok := typed_user["roles"]
+        if !ok {
+          return false, nil 
+        }
+        if typed_roles, ok := roles.([]string); ok {
+          has_role := stringInSlice(role, typed_roles)
+          return bool(has_role), nil
+        }
+      }
+      return false, nil
+    },
+    "misc": func(item string, context map[string]interface{}) (bool, error) {
+      user, ok := context["user"]
+      if !ok {
+        return false, nil 
+      }
+      if typed_user, ok := user.(map[string]interface{}); ok {
+        item_value, ok := typed_user[item]
+        if !ok {
+          return false, nil 
+        }
+        if typed_item_value, ok := item_value.(bool); ok {
+          return typed_item_value, nil
+        }
+      }
+      return false, nil
+    },
+  }
+  err := lp.SetTypes(types)
+  assert.Nil(t, err)
+  permissions := `{
+    "no_bypass": {
+      "flag": "never_bypass"
+    },
+    "flag": "testflag",
+    "role": "admin",
+    "misc": "test"
+  }`
+  user := map[string]interface{}{
+    "id": 1, 
+  }
+  
+  //OR truth table
+  //0 0 0
+  access, err := lp.CheckAccess(permissions, map[string]interface{}{"user": user})
+  assert.False(t, access)
+  assert.Nil(t, err)
+  //0 0 1
+  user["test"] = true
+  access, err = lp.CheckAccess(permissions, map[string]interface{}{"user": user})
+  assert.True(t, access)
+  assert.Nil(t, err)
+  //0 1 0
+  user["test"] = false
+  user["roles"] = []string{"admin"}
+  access, err = lp.CheckAccess(permissions, map[string]interface{}{"user": user})
+  assert.True(t, access)
+  assert.Nil(t, err)
+  //0 1 1
+  user["test"] = true
+  access, err = lp.CheckAccess(permissions, map[string]interface{}{"user": user})
+  assert.True(t, access)
+  assert.Nil(t, err)
+  //1 0 0
+  user = map[string]interface{}{
+    "id": 1,
+    "testflag": true,
+  }
+  access, err = lp.CheckAccess(permissions, map[string]interface{}{"user": user})
+  assert.True(t, access)
+  assert.Nil(t, err)
+  //1 0 1
+  user["test"] = true
+  access, err = lp.CheckAccess(permissions, map[string]interface{}{"user": user})
+  assert.True(t, access)
+  assert.Nil(t, err)
+  //1 1 0
+  user["test"] = false
+  user["roles"] = []string{"admin"}
+  access, err = lp.CheckAccess(permissions, map[string]interface{}{"user": user})
+  assert.True(t, access)
+  assert.Nil(t, err)
+  //1 1 1
+  user["test"] = true
+  access, err = lp.CheckAccess(permissions, map[string]interface{}{"user": user})
+  assert.True(t, access)
+  assert.Nil(t, err)
+}
+
+func TestCheckAccessMultipleItemsShorthandOR(t *testing.T) {
+  t.Parallel()
+  lp := LogicalPermissions{}
+  types := map[string]func(string, map[string]interface{}) (bool, error){
+    "role": func(role string, context map[string]interface{}) (bool, error) {
+      user, ok := context["user"]
+      if !ok {
+        return false, nil 
+      }
+      if typed_user, ok := user.(map[string]interface{}); ok {
+        roles, ok := typed_user["roles"]
+        if !ok {
+          return false, nil 
+        }
+        if typed_roles, ok := roles.([]string); ok {
+          has_role := stringInSlice(role, typed_roles)
+          return bool(has_role), nil
+        }
+      }
+      return false, nil
+    },
+  }
+  err := lp.SetTypes(types)
+  assert.Nil(t, err)
+  permissions := map[string]interface{}{
+    "role": []string{
+      "admin",
+      "editor",
+    },
+  }
+  user := map[string]interface{}{
+    "id": 1, 
+  }
+  //OR truth table
+  //0 0
+  access, err := lp.CheckAccess(permissions, map[string]interface{}{"user": user})
+  assert.False(t, access)
+  assert.Nil(t, err)
+  user["roles"] = []string{}
+  access, err = lp.CheckAccess(permissions, map[string]interface{}{"user": user})
+  assert.False(t, access)
+  assert.Nil(t, err)
+  //0 1
+  user["roles"] = []string{"editor"}
+  access, err = lp.CheckAccess(permissions, map[string]interface{}{"user": user})
+  assert.True(t, access)
+  assert.Nil(t, err)
+  //1 0
+  user["roles"] = []string{"admin"}
+  access, err = lp.CheckAccess(permissions, map[string]interface{}{"user": user})
+  assert.True(t, access)
+  assert.Nil(t, err)
+  //1 1
+  user["roles"] = []string{"editor", "admin"}
+  access, err = lp.CheckAccess(permissions, map[string]interface{}{"user": user})
+  assert.True(t, access)
   assert.Nil(t, err)
 }

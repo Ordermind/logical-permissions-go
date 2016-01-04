@@ -26,7 +26,3 @@ type InvalidValueForLogicGateError struct {
 type PermissionTypeNotRegisteredError struct {
   CustomError
 }
-
-type InvalidCallbackReturnTypeError struct {
-  CustomError
-}

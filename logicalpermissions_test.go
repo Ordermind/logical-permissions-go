@@ -4,7 +4,7 @@ import (
   "fmt"
   "testing"
   "github.com/stretchr/testify/assert"
-//  . "github.com/MakeNowJust/heredoc/dot"
+  . "github.com/MakeNowJust/heredoc/dot"
   . "github.com/ordermind/logical-permissions-go"
 )
 
@@ -221,4 +221,338 @@ func TestSetBypassCallback(t *testing.T) {
 
 /*-------------LogicalPermissions::CheckAccess()--------------*/
 
+func TestCheckAccessParamPermissionsWrongPermissionType(t *testing.T) {
+  t.Parallel()
+  lp := LogicalPermissions{}
+  
+  permissions := []interface{}{
+    "test1",
+    "test2",
+  }
+  access, err := lp.CheckAccess(permissions, make(map[string]interface{}))
+  assert.False(t, access)
+  if assert.Error(t, err) {
+    assert.IsType(t, &CustomError{}, err)
+  }
+  
+  str_permissions := D(`
+    "flag": "testflag"
+  `)
+  access, err = lp.CheckAccess(str_permissions, make(map[string]interface{}))
+  assert.False(t, access)
+  if assert.Error(t, err) {
+    assert.IsType(t, &InvalidArgumentValueError{}, err)
+  }
+}
 
+func TestCheckAccessParamPermissionsNestedTypes(t *testing.T) {
+  t.Parallel()
+  lp := LogicalPermissions{}
+
+  //Directly nested
+  permissions := D(`{
+    "flag": {
+      "flag": "testflag"
+    }
+  }`)
+  access, err := lp.CheckAccess(permissions, make(map[string]interface{}))
+  assert.False(t, access)
+  if assert.Error(t, err) {
+    assert.IsType(t, &InvalidArgumentValueError{}, err)
+  }
+  
+  //Indirectly nested
+  permissions = D(`{
+    "flag": {
+      "OR": {
+        "flag": "testflag"
+      }
+    }
+  }`)
+  access, err = lp.CheckAccess(permissions, make(map[string]interface{}))
+  assert.False(t, access)
+  if assert.Error(t, err) {
+    assert.IsType(t, &InvalidArgumentValueError{}, err)
+  }
+}
+
+func TestCheckAccessParamPermissionsUnregisteredType(t *testing.T) {
+  t.Parallel()
+  lp := LogicalPermissions{}
+  
+  permissions := D(`{
+    "flag": "testflag"
+  }`)
+  access, err := lp.CheckAccess(permissions, make(map[string]interface{}))
+  assert.False(t, access)
+  if assert.Error(t, err) {
+    assert.IsType(t, &PermissionTypeNotRegisteredError{}, err)
+  }
+}
+
+func TestCheckAccessBypassAccessCheckContextPassing(t *testing.T) {
+  t.Parallel()
+  lp := LogicalPermissions{}
+  user := map[string]interface{}{
+    "id": 1,
+  }
+  bypass_callback := func(context map[string]interface{}) (bool, error) {
+    _, ok := context["user"]
+    assert.True(t, ok)
+    assert.Equal(t, user, context["user"])
+    return true, nil
+  }
+  lp.SetBypassCallback(bypass_callback)
+  lp.CheckAccess(make(map[string]interface{}), map[string]interface{}{"user": user})
+}
+
+func TestCheckAccessBypassAccessAllow(t *testing.T) {
+  t.Parallel()
+  lp := LogicalPermissions{}
+  bypass_callback := func(context map[string]interface{}) (bool, error) {
+    return true, nil
+  }
+  lp.SetBypassCallback(bypass_callback)
+  access, err := lp.CheckAccess(make(map[string]interface{}), make(map[string]interface{}))
+  assert.True(t, access)
+  assert.Nil(t, err)
+}
+
+func TestCheckAccessBypassAccessDeny(t *testing.T) {
+  t.Parallel()
+  lp := LogicalPermissions{}
+  bypass_callback := func(context map[string]interface{}) (bool, error) {
+    return false, nil
+  }
+  lp.SetBypassCallback(bypass_callback)
+  access, err := lp.CheckAccess(make(map[string]interface{}), make(map[string]interface{}))
+  assert.False(t, access)
+  assert.Nil(t, err)
+}
+
+func TestCheckAccessNoBypassWrongType(t *testing.T) {
+  t.Parallel()
+  lp := LogicalPermissions{}
+  bypass_callback := func(context map[string]interface{}) (bool, error) {
+    return true, nil
+  }
+  lp.SetBypassCallback(bypass_callback)
+  access, err := lp.CheckAccess(map[string]interface{}{"no_bypass": []string{"test"}}, make(map[string]interface{}))
+  assert.False(t, access)
+  if assert.Error(t, err) {
+    assert.IsType(t, &InvalidArgumentValueError{}, err)
+  }
+}
+
+func TestCheckAccessNoBypassAccessBooleanAllow(t *testing.T) {
+  t.Parallel()
+  lp := LogicalPermissions{}
+  bypass_callback := func(context map[string]interface{}) (bool, error) {
+    return true, nil
+  }
+  lp.SetBypassCallback(bypass_callback)
+  permissions := map[string]interface{}{
+    "no_bypass": false, 
+  }
+  access, err := lp.CheckAccess(permissions, make(map[string]interface{}))
+  assert.True(t, access)
+  assert.Nil(t, err)
+  //Test that permission object is not changed
+  _, ok := permissions["no_bypass"]
+  assert.True(t, ok)
+}
+
+func TestCheckAccessNoBypassAccessBooleanDeny(t *testing.T) {
+  t.Parallel()
+  lp := LogicalPermissions{}
+  bypass_callback := func(context map[string]interface{}) (bool, error) {
+    return true, nil
+  }
+  lp.SetBypassCallback(bypass_callback)
+  permissions := map[string]interface{}{
+    "no_bypass": true, 
+  }
+  access, err := lp.CheckAccess(permissions, make(map[string]interface{}))
+  assert.False(t, access)
+  assert.Nil(t, err)
+}
+
+func TestCheckAccessNoBypassAccessMapAllow(t *testing.T) {
+  t.Parallel()
+  lp := LogicalPermissions{}
+  types := map[string]func(string, map[string]interface{}) (bool, error){
+    "flag": func(flag string, context map[string]interface{}) (bool, error) {
+      if flag == "never_bypass" {
+        user, ok := context["user"]
+        if !ok {
+          return false, nil 
+        }
+        if typed_user, ok := user.(map[string]interface{}); ok {
+          never_bypass, ok := typed_user["never_bypass"]
+          if !ok {
+            return false, nil 
+          }
+          if bool_never_bypass, ok := never_bypass.(bool); ok {
+            access := bool_never_bypass
+            return access, nil
+          }
+        }
+      }
+      return false, nil
+    },
+  }
+  err := lp.SetTypes(types)
+  assert.Nil(t, err)
+
+  bypass_callback := func(context map[string]interface{}) (bool, error) {
+    return true, nil
+  }
+  lp.SetBypassCallback(bypass_callback)
+  permissions := map[string]interface{}{
+    "no_bypass": map[string]interface{}{
+      "flag": "never_bypass",
+    },
+  }
+  user := map[string]interface{}{
+    "id": 1,
+    "never_bypass": false,
+  };
+  access, err := lp.CheckAccess(permissions, map[string]interface{}{"user": user})
+  assert.True(t, access)
+  assert.Nil(t, err)
+}
+
+func TestCheckAccessNoBypassAccessJSONAllow(t *testing.T) {
+  t.Parallel()
+  lp := LogicalPermissions{}
+  types := map[string]func(string, map[string]interface{}) (bool, error){
+    "flag": func(flag string, context map[string]interface{}) (bool, error) {
+      if flag == "never_bypass" {
+        user, ok := context["user"]
+        if !ok {
+          return false, nil 
+        }
+        if typed_user, ok := user.(map[string]interface{}); ok {
+          never_bypass, ok := typed_user["never_bypass"]
+          if !ok {
+            return false, nil 
+          }
+          if bool_never_bypass, ok := never_bypass.(bool); ok {
+            access := bool_never_bypass
+            return access, nil
+          }
+        }
+      }
+      return false, nil
+    },
+  }
+  err := lp.SetTypes(types)
+  assert.Nil(t, err)
+
+  bypass_callback := func(context map[string]interface{}) (bool, error) {
+    return true, nil
+  }
+  lp.SetBypassCallback(bypass_callback)
+  permissions := D(`{
+    "no_bypass": {
+      "flag": "never_bypass"
+    }
+  }`)
+  user := map[string]interface{}{
+    "id": 1,
+    "never_bypass": false,
+  };
+  access, err := lp.CheckAccess(permissions, map[string]interface{}{"user": user})
+  assert.True(t, access)
+  assert.Nil(t, err)
+}
+
+func TestCheckAccessNoBypassAccessMapDeny(t *testing.T) {
+  t.Parallel()
+  lp := LogicalPermissions{}
+  types := map[string]func(string, map[string]interface{}) (bool, error){
+    "flag": func(flag string, context map[string]interface{}) (bool, error) {
+      if flag == "never_bypass" {
+        user, ok := context["user"]
+        if !ok {
+          return false, nil 
+        }
+        if typed_user, ok := user.(map[string]interface{}); ok {
+          never_bypass, ok := typed_user["never_bypass"]
+          if !ok {
+            return false, nil 
+          }
+          if bool_never_bypass, ok := never_bypass.(bool); ok {
+            access := bool_never_bypass
+            return access, nil
+          }
+        }
+      }
+      return false, nil
+    },
+  }
+  err := lp.SetTypes(types)
+  assert.Nil(t, err)
+
+  bypass_callback := func(context map[string]interface{}) (bool, error) {
+    return true, nil
+  }
+  lp.SetBypassCallback(bypass_callback)
+  permissions := map[string]interface{}{
+    "no_bypass": map[string]interface{}{
+      "flag": "never_bypass",
+    },
+  }
+  user := map[string]interface{}{
+    "id": 1,
+    "never_bypass": true,
+  };
+  access, err := lp.CheckAccess(permissions, map[string]interface{}{"user": user})
+  assert.False(t, access)
+  assert.Nil(t, err)
+}
+
+func TestCheckAccessNoBypassAccessJSONDeny(t *testing.T) {
+  t.Parallel()
+  lp := LogicalPermissions{}
+  types := map[string]func(string, map[string]interface{}) (bool, error){
+    "flag": func(flag string, context map[string]interface{}) (bool, error) {
+      if flag == "never_bypass" {
+        user, ok := context["user"]
+        if !ok {
+          return false, nil 
+        }
+        if typed_user, ok := user.(map[string]interface{}); ok {
+          never_bypass, ok := typed_user["never_bypass"]
+          if !ok {
+            return false, nil 
+          }
+          if bool_never_bypass, ok := never_bypass.(bool); ok {
+            access := bool_never_bypass
+            return access, nil
+          }
+        }
+      }
+      return false, nil
+    },
+  }
+  err := lp.SetTypes(types)
+  assert.Nil(t, err)
+
+  bypass_callback := func(context map[string]interface{}) (bool, error) {
+    return true, nil
+  }
+  lp.SetBypassCallback(bypass_callback)
+  permissions := D(`{
+    "no_bypass": {
+      "flag": "never_bypass"
+    }
+  }`)
+  user := map[string]interface{}{
+    "id": 1,
+    "never_bypass": true,
+  };
+  access, err := lp.CheckAccess(permissions, map[string]interface{}{"user": user})
+  assert.False(t, access)
+  assert.Nil(t, err)
+}

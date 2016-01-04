@@ -91,14 +91,28 @@ func (this *LogicalPermissions) SetBypassCallback(callback func(map[string]inter
   this.bypass_callback = callback
 }
 
-func (this *LogicalPermissions) CheckAccess(json_permissions string, context map[string]interface{}) (bool, error) {
-  allow_bypass := false
-  var permissions map[string]interface{}
-  err := json.Unmarshal([]byte(json_permissions), &permissions)
-  if err != nil {
-    return false, &InvalidArgumentValueError{CustomError{fmt.Sprintf("Error parsing json_permissions: %s", err.Error())}}
+func (this *LogicalPermissions) CheckAccess(permissions interface{}, context map[string]interface{}) (bool, error) {
+  allow_bypass := true
+  json_permissions := ""
+  if map_permissions, ok := permissions.(map[string]interface{}); ok {
+    tmp, err := json.Marshal(map_permissions)
+    if err != nil {
+      return false, &InvalidArgumentValueError{CustomError{fmt.Sprintf("Could not convert permissions to json object: %s", err.Error())}}
+    }
+    json_permissions = string(tmp)
+  } else if tmp2, ok2 := interface{}(permissions).(string); ok2 {
+    json_permissions = tmp2
+  } else {
+    return false, &CustomError{"permissions must be a string or a map."}
   }
-  if val, ok := permissions["no_bypass"]; ok {
+  
+  map_permissions := make(map[string]interface{})
+  err := json.Unmarshal([]byte(json_permissions), &map_permissions)
+  if err != nil {
+    return false, &InvalidArgumentValueError{CustomError{fmt.Sprintf("Error parsing json permissions: %s", err.Error())}}
+  }
+
+  if val, ok := map_permissions["no_bypass"]; ok {
     if boolval, ok := val.(bool); ok {
       allow_bypass = !boolval
     } else if mapval, ok := val.(map[string]interface{}); ok {
@@ -111,36 +125,39 @@ func (this *LogicalPermissions) CheckAccess(json_permissions string, context map
     } else {
       return false, &InvalidArgumentValueError{CustomError{fmt.Sprintf("The no_bypass value must be a boolean or a map. Current value: %v", val)}}
     }
-    delete(permissions, "no_bypass")
-    
-    if allow_bypass {
-      access, err_custom := this.checkBypassAccess(context)
-      if err_custom != nil {
-        err_custom.setMessage(fmt.Sprintf("Error checking bypass access: %s", err_custom.Error()))
-        return false, err_custom
-      }
-      return access, nil
+    delete(map_permissions, "no_bypass")
+  }
+  if allow_bypass {
+    access, err_custom := this.checkBypassAccess(context)
+    if err_custom != nil {
+      err_custom.setMessage(fmt.Sprintf("Error checking bypass access: %s", err_custom.Error()))
+      return false, err_custom
     }
-    if len(permissions) > 0 {
-      access, err_custom := this.processOR(permissions, "", context)
-      if err_custom != nil {
-        err_custom.setMessage(fmt.Sprintf("Error checking access: %s", err_custom.Error()))
-        return false, err_custom
-      }
-      return access, nil
+    if access {
+      return access, nil 
     }
+  }
+  if len(map_permissions) > 0 {
+    access, err_custom := this.processOR(map_permissions, "", context)
+    if err_custom != nil {
+      err_custom.setMessage(fmt.Sprintf("Error checking access: %s", err_custom.Error()))
+      return false, err_custom
+    }
+    return access, nil
   }
   return false, nil
 }
 
 func (this *LogicalPermissions) checkBypassAccess(context map[string]interface{}) (bool, CustomErrorInterface) {
   bypass_callback := this.GetBypassCallback()
-  bypass_access, err_custom := bypass_callback(context)
-  if err_custom != nil {
-    return false, &CustomError{err_custom.Error()} 
+  if bypass_callback != nil {
+    bypass_access, err_custom := bypass_callback(context)
+    if err_custom != nil {
+      return false, &CustomError{err_custom.Error()} 
+    }
+    return bypass_access, nil
   }
-
-  return bypass_access, nil
+  return false, nil
 }
 
 func (this *LogicalPermissions) dispatch(permissions interface{}, permtype string, context map[string]interface{}) (bool, CustomErrorInterface) {

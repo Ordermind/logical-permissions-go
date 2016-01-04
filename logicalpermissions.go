@@ -253,13 +253,12 @@ func (this *LogicalPermissions) dispatch(permissions interface{}, permtype strin
 }
 
 func (this *LogicalPermissions) processAND(permissions interface{}, permtype string, context map[string]interface{}) (bool, CustomErrorInterface) {
-  access := false
   if slice_permissions, ok := permissions.([]interface{}); ok {
     if len(slice_permissions) < 1 {
       return false, &InvalidValueForLogicGateError{CustomError{fmt.Sprintf("The value slice of an AND gate must contain a minimum of one element. Current value: %v", slice_permissions)}}
     }
     
-    access = true
+    access := true
     for _, permission := range slice_permissions {
       result, err := this.dispatch(permission, permtype, context)
       if err != nil {
@@ -270,12 +269,14 @@ func (this *LogicalPermissions) processAND(permissions interface{}, permtype str
         break 
       }
     }
-  } else if map_permissions, ok := permissions.(map[string]interface{}); ok {
+    return access, nil
+  }
+  if map_permissions, ok := permissions.(map[string]interface{}); ok {
     if len(map_permissions) < 1 {
       return false, &InvalidValueForLogicGateError{CustomError{fmt.Sprintf("The value map of an AND gate must contain a minimum of one element. Current value: %v", map_permissions)}}
     }
     
-    access = true
+    access := true
     for k, v := range map_permissions {
       subpermissions := map[string]interface{}{k: v}
       result, err := this.dispatch(subpermissions, permtype, context)
@@ -287,10 +288,10 @@ func (this *LogicalPermissions) processAND(permissions interface{}, permtype str
         break 
       }
     }
-  } else {
-    return false, &InvalidValueForLogicGateError{CustomError{fmt.Sprintf("The value of an AND gate must be a slice or map. Current value: %v", permissions)}}
+    return access, nil
   }
-  return access, nil
+    
+  return false, &InvalidValueForLogicGateError{CustomError{fmt.Sprintf("The value of an AND gate must be a slice or map. Current value: %v", permissions)}}
 }
 
 func (this *LogicalPermissions) processNAND(permissions interface{}, permtype string, context map[string]interface{}) (bool, CustomErrorInterface) {
@@ -315,12 +316,12 @@ func (this *LogicalPermissions) processNAND(permissions interface{}, permtype st
 }
 
 func (this *LogicalPermissions) processOR(permissions interface{}, permtype string, context map[string]interface{}) (bool, CustomErrorInterface) {
-  access := false
   if slice_permissions, ok := permissions.([]interface{}); ok {
     if len(slice_permissions) < 1 {
       return false, &InvalidValueForLogicGateError{CustomError{fmt.Sprintf("The value slice of an OR gate must contain a minimum of one element. Current value: %v", slice_permissions)}}
     }
 
+    access := false
     for _, permission := range slice_permissions {
       result, err := this.dispatch(permission, permtype, context)
       if err != nil {
@@ -331,11 +332,14 @@ func (this *LogicalPermissions) processOR(permissions interface{}, permtype stri
         break 
       }
     }
-  } else if map_permissions, ok := permissions.(map[string]interface{}); ok {
+    return access, nil
+  }
+  if map_permissions, ok := permissions.(map[string]interface{}); ok {
     if len(map_permissions) < 1 {
       return false, &InvalidValueForLogicGateError{CustomError{fmt.Sprintf("The value map of an OR gate must contain a minimum of one element. Current value: %v", map_permissions)}}
     }
 
+    access := false
     for k, v := range map_permissions {
       subpermissions := map[string]interface{}{k: v}
       result, err := this.dispatch(subpermissions, permtype, context)
@@ -347,10 +351,10 @@ func (this *LogicalPermissions) processOR(permissions interface{}, permtype stri
         break 
       }
     }
-  } else {
-    return false, &InvalidValueForLogicGateError{CustomError{fmt.Sprintf("The value of an OR gate must be a slice or map. Current value: %v", permissions)}}
+    return access, nil
   }
-  return access, nil
+   
+  return false, &InvalidValueForLogicGateError{CustomError{fmt.Sprintf("The value of an OR gate must be a slice or map. Current value: %v", permissions)}}
 }
 
 func (this *LogicalPermissions) processNOR(permissions interface{}, permtype string, context map[string]interface{}) (bool, CustomErrorInterface) {
@@ -375,14 +379,14 @@ func (this *LogicalPermissions) processNOR(permissions interface{}, permtype str
 }
 
 func (this *LogicalPermissions) processXOR(permissions interface{}, permtype string, context map[string]interface{}) (bool, CustomErrorInterface) {
-  access := false
-  count_true := 0
-  count_false := 0
   if slice_permissions, ok := permissions.([]interface{}); ok {
     if len(slice_permissions) < 2 {
       return false, &InvalidValueForLogicGateError{CustomError{fmt.Sprintf("The value slice of an XOR gate must contain a minimum of two elements. Current value: %v", slice_permissions)}}
     }
     
+    access := false
+    count_true := 0
+    count_false := 0
     for _, permission := range slice_permissions {
       result, err := this.dispatch(permission, permtype, context)
       if err != nil {
@@ -398,11 +402,16 @@ func (this *LogicalPermissions) processXOR(permissions interface{}, permtype str
         break
       }
     }
-  } else if map_permissions, ok := permissions.(map[string]interface{}); ok {
+    return access, nil
+  }
+  if map_permissions, ok := permissions.(map[string]interface{}); ok {
     if len(map_permissions) < 2 {
       return false, &InvalidValueForLogicGateError{CustomError{fmt.Sprintf("The value map of an XOR gate must contain a minimum of two elements. Current value: %v", map_permissions)}}
     }
     
+    access := false
+    count_true := 0
+    count_false := 0
     for k, v := range map_permissions {
       subpermissions := map[string]interface{}{k: v}
       result, err := this.dispatch(subpermissions, permtype, context)
@@ -419,10 +428,10 @@ func (this *LogicalPermissions) processXOR(permissions interface{}, permtype str
         break
       }
     }
-  } else {
-    return false, &InvalidValueForLogicGateError{CustomError{fmt.Sprintf("The value of an XOR gate must be a slice or map. Current value: %v", permissions)}}
+    return access, nil
   }
-  return access, nil
+    
+  return false, &InvalidValueForLogicGateError{CustomError{fmt.Sprintf("The value of an XOR gate must be a slice or map. Current value: %v", permissions)}}
 }
 
 func (this *LogicalPermissions) processNOT(permissions interface{}, permtype string, context map[string]interface{}) (bool, CustomErrorInterface) {

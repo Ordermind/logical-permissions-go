@@ -4,7 +4,7 @@ import (
   "fmt"
   "testing"
   "github.com/stretchr/testify/assert"
-  . "github.com/MakeNowJust/heredoc/dot"
+//  . "github.com/MakeNowJust/heredoc/dot"
   . "github.com/ordermind/logical-permissions-go"
 )
 
@@ -131,8 +131,8 @@ func TestGetTypeCallbackUnregisteredType(t *testing.T) {
 func TestGetTypeCallback(t *testing.T) {
   t.Parallel()
   lp := LogicalPermissions{}
-  callback1 := func(string, map[string]interface{}) (bool, error) {return true, nil}
-    return true
+  callback1 := func(string, map[string]interface{}) (bool, error) {
+    return true, nil
   }
   err := lp.AddType("test", callback1)
   if err != nil {

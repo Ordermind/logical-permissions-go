@@ -1,25 +1,32 @@
 package logicalpermissions
 
-type InvalidArgumentValueError struct {
+type CustomErrorInterface interface {
+  setMessage(msg string)
+  Error() string
+}
+
+type CustomError struct {
   msg string
 }
 
-func (this *InvalidArgumentValueError) Error() string { return this.msg }
+func (this *CustomError) setMessage(msg string) {
+  this.msg = msg 
+}
+
+func (this *CustomError) Error() string { return this.msg }
+
+type InvalidArgumentValueError struct {
+  CustomError
+}
 
 type InvalidValueForLogicGateError struct {
-  msg string
+  CustomError
 }
-
-func (this *InvalidValueForLogicGateError) Error() string { return this.msg }
 
 type PermissionTypeNotRegisteredError struct {
-  msg string
+  CustomError
 }
-
-func (this *PermissionTypeNotRegisteredError) Error() string { return this.msg }
 
 type InvalidCallbackReturnTypeError struct {
-  msg string
+  CustomError
 }
-
-func (this *InvalidCallbackReturnTypeError) Error() string { return this.msg }

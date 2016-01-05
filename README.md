@@ -87,7 +87,7 @@ func main() {
 }
 ```
 
-The main api method is `LogicalPermissions::CheckAccess()`, which checks the access for a **permission tree**. A permission tree is a bundle of permissions that apply to a specific action. Let"s say for example that you want to restrict access for updating a user. You"d like only users with the role "admin" to be able to update any user, but users should also be able to update their own user data (or at least some of it). With the structure this package provides, these conditions could be expressed elegantly in a permission tree as such:
+The main api method is [`LogicalPermissions::CheckAccess()`](#checkaccess), which checks the access for a **permission tree**. A permission tree is a bundle of permissions that apply to a specific action. Let"s say for example that you want to restrict access for updating a user. You"d like only users with the role "admin" to be able to update any user, but users should also be able to update their own user data (or at least some of it). With the structure this package provides, these conditions could be expressed elegantly in a permission tree as such:
 
 ```go
 `{
@@ -98,10 +98,10 @@ The main api method is `LogicalPermissions::CheckAccess()`, which checks the acc
 }`
 ```
 
-In this example `role` and `flag` are the evaluated permission types. For this example to work you will need to register the permission types "role" and "flag" so that the class knows which callbacks are responsible for evaluating the respective permission types. You can do that with `LogicalPermissions::AddType()`.
+In this example `role` and `flag` are the evaluated permission types. For this example to work you will need to register the permission types "role" and "flag" so that the class knows which callbacks are responsible for evaluating the respective permission types. You can do that with [`LogicalPermissions::AddType()`](#addtype).
 
 ### Bypassing permissions
-This packages also supports rules for bypassing permissions completely for superusers. In order to use this functionality you need to register a callback with `LogicalPermissions::SetBypassCallback()`. The registered callback will run on every permission check and if it returns `true`, access will automatically be granted. If you want to make exceptions you can do so by adding `"no_bypass": true` to the first level of a permission tree. You can even use permissions as conditions for `no_bypass`.
+This packages also supports rules for bypassing permissions completely for superusers. In order to use this functionality you need to register a callback with [`LogicalPermissions::SetBypassCallback()`](#setbypasscallback). The registered callback will run on every permission check and if it returns `true`, access will automatically be granted. If you want to make exceptions you can do so by adding `"no_bypass": true` to the first level of a permission tree. You can even use permissions as conditions for `no_bypass`.
 
 Examples: 
 
@@ -299,3 +299,213 @@ Examples:
 
 
 ## API Documentation
+## Table of Contents
+
+* [LogicalPermissions](#logicalpermissions)
+    * [AddType](#addtype)
+    * [RemoveType](#removetype)
+    * [TypeExists](#typeexists)
+    * [GetTypeCallback](#gettypecallback)
+    * [GetTypes](#gettypes)
+    * [SetTypes](#settypes)
+    * [GetBypassCallback](#getbypasscallback)
+    * [SetBypassCallback](#setbypasscallback)
+    * [CheckAccess](#checkaccess)
+
+## LogicalPermissions
+
+### AddType
+
+Adds a permission type.
+
+```go
+LogicalPermissions::AddType(name string, callback func(string, map[string]interface{}) (bool, error)) error
+```
+
+
+**Parameters:**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `name` | **string** | The name of the permission type. |
+| `callback` | **func(string, map[string]interface{}) (bool, error)** | The callback that evaluates the permission type. Upon calling CheckAccess() the registered callback will be passed two parameters: a permission string (such as a role) and the context map passed to CheckAccess(). The permission will always be a single string even if for example multiple roles are accepted. In that case the callback will be called once for each role that is to be evaluated. The callback should return a boolean which determines whether access should be granted. It should also return an error, or nil if no error occurred. |
+
+
+**Return Value:**
+
+**error** if something goes wrong, or **nil** if no error occurs.
+
+
+---
+
+
+### RemoveType
+
+Removes a permission type.
+
+```go
+LogicalPermissions::RemoveType(name string) error
+```
+
+
+**Parameters:**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `name` | **string** | The name of the permission type. |
+
+
+**Return Value:**
+
+**error** if something goes wrong, or **nil** if no error occurs.
+
+
+---
+
+
+### TypeExists
+
+Checks whether a permission type is registered.
+
+```go
+LogicalPermissions::TypeExists(name string) (bool, error)
+```
+
+
+**Parameters:**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `name` | **string** | The name of the permission type. |
+
+
+**Return Values:**
+
+- **true** if the type is found or **false** if the type isn't found.  
+- **error** if something goes wrong, or **nil** if no error occurs.
+
+---
+
+
+### GetTypeCallback
+
+Gets the callback for a permission type.
+
+```go
+LogicalPermissions::GetTypeCallback(name string) (func(string, map[string]interface{}) (bool, error), error)
+```
+
+
+**Parameters:**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `name` | **string** | The name of the permission type. |
+
+
+**Return Values:**
+
+- **func(string, map[string]interface{}) (bool, error)** Callback for the permission type.  
+- **error** if something goes wrong, or **nil** if no error occurs.
+
+---
+
+
+### GetTypes
+
+Gets all defined permission types.
+
+```go
+LogicalPermissions::GetTypes() map[string]func(string, map[string]interface{}) (bool, error)
+```
+
+
+
+**Return Value:**
+
+**map[string]func(string, map[string]interface{}) (bool, error)** A map of permission types with the structure {"name": callback, "name2": callback2, ...}. This map is shallow copied.
+
+---
+
+
+### SetTypes
+
+Overwrites all defined permission types.
+
+```go
+LogicalPermissions::SetTypes(types map[string]func(string, map[string]interface{}) (bool, error)) error
+```
+
+
+**Parameters:**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `types` | **map[string]func(string, map[string]interface{}) (bool, error)** | A map of permission types with the structure {"name": callback, "name2": callback2, ...}. This map is shallow copied. |
+
+
+**Return Value:**
+
+**error** if something goes wrong, or **nil** if no error occurs.
+
+---
+
+
+### GetBypassCallback
+
+Gets the registered callback for access bypass evaluation.
+
+```go
+LogicalPermissions::GetBypassCallback() func(map[string]interface{}) (bool, error)
+```
+
+
+**Return Value:**
+
+**func(map[string]interface{}) (bool, error)** Bypass access callback.
+
+---
+
+
+### SetBypassCallback
+
+Sets the callback for access bypass evaluation.
+
+```go
+LogicalPermissions::SetBypassCallback(callback func(map[string]interface{}) (bool, error))
+```
+
+
+**Parameters:**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `callback` | **func(map[string]interface{}) (bool, error)** | The callback that evaluates access bypassing. Upon calling CheckAccess() the registered bypass callback will be passed one parameter, which is the context map passed to CheckAccess(). It should return a boolean which determines whether bypass access should be granted. It should also return an error, or nil if no error occurred. |
+
+
+---
+
+
+### CheckAccess
+
+Checks access for a permission tree.
+
+```go
+LogicalPermissions::CheckAccess(permissions interface{}, context map[string]interface{}) (bool, error)
+```
+
+
+**Parameters:**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `permissions` | **map[string]interface{} or json string** | The permission tree to be evaluated. The permission tree can either be a map or a string containing a json object. |
+| `context` | **map[string]interface{}** | A context map that could for example contain the evaluated user and document. |
+
+
+**Return Values:**
+
+- **true** if access is granted or **false** if access is denied.  
+- **error** if something goes wrong, or **nil** if no error occurs.
+
+---

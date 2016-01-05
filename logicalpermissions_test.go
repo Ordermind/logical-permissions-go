@@ -373,6 +373,25 @@ func TestCheckAccessNoBypassWrongType(t *testing.T) {
   }
 }
 
+func TestCheckAccessNoBypassWrongValue(t *testing.T) {
+  t.Parallel()
+  lp := LogicalPermissions{}
+  bypass_callback := func(context map[string]interface{}) (bool, error) {
+    return true, nil
+  }
+  lp.SetBypassCallback(bypass_callback)
+  permissions := map[string]interface{}{
+    "no_bypass": map[string]interface{}{
+      "test": true,
+    },
+  }
+  access, err := lp.CheckAccess(permissions, make(map[string]interface{}))
+  assert.False(t, access)
+  if assert.Error(t, err) {
+    assert.IsType(t, &InvalidArgumentValueError{}, err)
+  }
+}
+
 func TestCheckAccessNoBypassAccessBooleanAllow(t *testing.T) {
   t.Parallel()
   lp := LogicalPermissions{}

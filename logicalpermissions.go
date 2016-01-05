@@ -97,24 +97,16 @@ func (this *LogicalPermissions) CheckAccess(permissions interface{}, context map
     return false, err 
   }
 
+  //Bypass access check
   allow_bypass := true
-  if val, ok := map_permissions["no_bypass"]; ok {
-    if boolval, ok := val.(bool); ok {
-      allow_bypass = !boolval
-    } else if mapval, ok := val.(map[string]interface{}); ok {
-      result, err_custom := this.processOR(mapval, "", context)
-      allow_bypass = !result
-      if err_custom != nil {
-        err_custom.setMessage(fmt.Sprintf("Error checking no_bypass permissions: %s", err_custom.Error()))
-        return false, err_custom
-      }
-    } else {
-      return false, &InvalidArgumentValueError{CustomError{fmt.Sprintf("The no_bypass value must be a boolean or a map. Current value: %v", val)}}
+  if no_bypass, ok := map_permissions["no_bypass"]; ok {
+    result, err_custom := this.checkAllowBypass(no_bypass, context)
+    if err_custom != nil {
+      return false, err_custom
     }
+    allow_bypass = result
     delete(map_permissions, "no_bypass")
   }
-
-  //Bypass access check
   if allow_bypass {
     access, err_custom := this.checkBypassAccess(context)
     if err_custom != nil {
@@ -159,6 +151,21 @@ func (this *LogicalPermissions) preparePermissions(permissions interface{}) (map
     return nil, &InvalidArgumentValueError{CustomError{fmt.Sprintf("Error parsing json permissions: %s", err.Error())}}
   }
   return map_permissions, nil
+}
+
+func (this *LogicalPermissions) checkAllowBypass(no_bypass interface{}, context map[string]interface{}) (bool, CustomErrorInterface) {
+  if boolval, ok := no_bypass.(bool); ok {
+    return !boolval, nil
+  }
+  if mapval, ok := no_bypass.(map[string]interface{}); ok {
+    result, err_custom := this.processOR(mapval, "", context)
+    if err_custom != nil {
+      err_custom.setMessage(fmt.Sprintf("Error checking no_bypass permissions: %s", err_custom.Error()))
+      return false, err_custom
+    }
+    return !result, nil
+  }
+  return false, &InvalidArgumentValueError{CustomError{fmt.Sprintf("The no_bypass value must be a boolean or a map. Current value: %v", no_bypass)}}
 }
 
 func (this *LogicalPermissions) checkBypassAccess(context map[string]interface{}) (bool, CustomErrorInterface) {

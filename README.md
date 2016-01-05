@@ -505,7 +505,7 @@ LogicalPermissions::CheckAccess(permissions interface{}, context map[string]inte
 
 **Return Values:**
 
-- **true** if access is granted or **false** if access is denied.  
+- **true** if access is granted or **false** if access is denied. If an error occurs, this value will always be **false**.  
 - **error** if something goes wrong, or **nil** if no error occurs.
 
 ---

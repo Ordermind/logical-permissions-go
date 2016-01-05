@@ -136,7 +136,7 @@ func (this *LogicalPermissions) preparePermissions(permissions interface{}) (map
   if map_permissions, ok := permissions.(map[string]interface{}); ok {
     tmp, err := json.Marshal(map_permissions)
     if err != nil {
-      return nil, &InvalidArgumentValueError{CustomError{fmt.Sprintf("Could not convert permissions to json object: %s", err.Error())}}
+      return nil, &InvalidArgumentValueError{CustomError{fmt.Sprintf("Could not convert permissions to json object: %s. Evaluated permissions: %v", err.Error(), map_permissions)}}
     }
     json_permissions = string(tmp)
   } else if tmp2, ok2 := interface{}(permissions).(string); ok2 {
@@ -148,7 +148,7 @@ func (this *LogicalPermissions) preparePermissions(permissions interface{}) (map
   map_permissions := make(map[string]interface{})
   err := json.Unmarshal([]byte(json_permissions), &map_permissions)
   if err != nil {
-    return nil, &InvalidArgumentValueError{CustomError{fmt.Sprintf("Error parsing json permissions: %s", err.Error())}}
+    return nil, &InvalidArgumentValueError{CustomError{fmt.Sprintf("Error parsing json permissions: %s. Evaluated permissions: %s", err.Error(), json_permissions)}}
   }
   return map_permissions, nil
 }

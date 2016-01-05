@@ -142,7 +142,7 @@ func (this *LogicalPermissions) preparePermissions(permissions interface{}) (map
   } else if tmp2, ok2 := interface{}(permissions).(string); ok2 {
     json_permissions = tmp2
   } else {
-    return nil, &CustomError{fmt.Sprintf("permissions must be a string or a map. Evaluated permissions: %v", permissions)}
+    return nil, &CustomError{fmt.Sprintf("permissions must be a string or a map[string]interface{}. Evaluated permissions: %v", permissions)}
   }
   
   map_permissions := make(map[string]interface{})

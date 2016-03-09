@@ -132,7 +132,15 @@ func (this *LogicalPermissions) GetValidPermissionKeys() []string {
   return append(core_keys, type_keys...)
 }
 
-func (this *LogicalPermissions) CheckAccess(permissions interface{}, context map[string]interface{}, allow_bypass bool) (bool, error) {
+func (this *LogicalPermissions) CheckAccess(permissions interface{}, context map[string]interface{}) (bool, error) {
+  return this.checkAccess(permissions, context, true)
+}
+
+func (this *LogicalPermissions) CheckAccessNoBypass(permissions interface{}, context map[string]interface{}) (bool, error) {
+  return this.checkAccess(permissions, context, false)
+}
+
+func (this *LogicalPermissions) checkAccess(permissions interface{}, context map[string]interface{}, allow_bypass bool) (bool, error) {
   map_permissions, err := this.preparePermissions(permissions)
   if err != nil {
     return false, err 

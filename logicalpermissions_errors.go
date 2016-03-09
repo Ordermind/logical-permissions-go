@@ -26,3 +26,8 @@ type InvalidValueForLogicGateError struct {
 type PermissionTypeNotRegisteredError struct {
   CustomError
 }
+
+type PermissionTypeAlreadyExistsError struct {
+  CustomError
+}
+

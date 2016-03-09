@@ -33,7 +33,31 @@ func TestAddTypeParamNameEmpty(t *testing.T) {
   type_callback := func(string, map[string]interface{}) (bool, error) {return true, nil}
   err := lp.AddType("", type_callback)
   if assert.Error(t, err) {
-     assert.IsType(t, &InvalidArgumentValueError{}, err)
+    assert.IsType(t, &InvalidArgumentValueError{}, err)
+  }
+}
+
+func TestAddTypeParamNameIsCoreKey(t *testing.T) {
+  t.Parallel()
+  lp := LogicalPermissions{}
+  type_callback := func(string, map[string]interface{}) (bool, error) {return true, nil}
+  err := lp.AddType("AND", type_callback)
+  if assert.Error(t, err) {
+    assert.IsType(t, &InvalidArgumentValueError{}, err)
+  }
+}
+
+func TestAddTypeParamNameExists(t *testing.T) {
+  t.Parallel()
+  lp := LogicalPermissions{}
+  type_callback := func(string, map[string]interface{}) (bool, error) {return true, nil}
+  err := lp.AddType("test", type_callback)
+  if err != nil {
+    t.Error(fmt.Sprintf("LogicalPermissions::AddType() returned an error: %s", err))
+  }
+  err2 := lp.AddType("test", type_callback)
+  if assert.Error(t, err2) {
+    assert.IsType(t, &PermissionTypeAlreadyExistsError{}, err2)
   }
 }
 
@@ -234,6 +258,19 @@ func TestSetTypesParamNameEmpty(t *testing.T) {
     return true, nil
   }
   types := map[string]func(string, map[string]interface{}) (bool, error){"": callback}
+  err := lp.SetTypes(types)
+  if assert.Error(t, err) {
+    assert.IsType(t, &InvalidArgumentValueError{}, err)
+  }
+}
+
+func TestSetTypesParamTypesNameIsCoreKey(t *testing.T) {
+  t.Parallel()
+  lp := LogicalPermissions{}
+  callback := func(string, map[string]interface{}) (bool, error) {
+    return true, nil
+  }
+  types := map[string]func(string, map[string]interface{}) (bool, error){"AND": callback}
   err := lp.SetTypes(types)
   if assert.Error(t, err) {
     assert.IsType(t, &InvalidArgumentValueError{}, err)

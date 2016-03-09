@@ -15,6 +15,16 @@ func (this *LogicalPermissions) AddType(name string, callback func(string, map[s
   if name == "" {
     return &InvalidArgumentValueError{CustomError{"The name parameter cannot be empty."}}
   }
+  for _, v := range this.getCorePermissionKeys() {
+    if (v == name) {
+      return &InvalidArgumentValueError{CustomError{fmt.Sprintf("The name parameter has the illegal value \"%s\". It cannot be one of the following values: %v", name, this.getCorePermissionKeys())}}
+    }
+  }
+  exists, _ := this.TypeExists(name)
+  if exists {
+    return &PermissionTypeAlreadyExistsError{CustomError{fmt.Sprintf("The permission type \"%s\" already exists! If you want to change the callback for an existing type, please use LogicalPermissions::SetTypeCallback().", name)}}
+  }
+  
   types := this.GetTypes()
   types[name] = callback
   this.SetTypes(types)
@@ -86,7 +96,12 @@ func (this *LogicalPermissions) GetTypes() map[string]func(string, map[string]in
 func (this *LogicalPermissions) SetTypes(types map[string]func(string, map[string]interface{}) (bool, error)) error {
   for name, _ := range types {
     if name == "" {
-      return &InvalidArgumentValueError{CustomError{"The name parameter cannot be empty."}}
+      return &InvalidArgumentValueError{CustomError{"The name for a type cannot be empty."}}
+    }
+    for _, v := range this.getCorePermissionKeys() {
+      if (v == name) {
+        return &InvalidArgumentValueError{CustomError{fmt.Sprintf("The name for a type has the illegal value \"%s\". It cannot be one of the following values: %v", name, this.getCorePermissionKeys())}}
+      }
     }
   }
 
@@ -528,7 +543,7 @@ func (this *LogicalPermissions) externalAccessCheck(permission string, permtype 
     return false, &CustomError{err_custom.Error()}
   }
   if !exists {
-    return false, &PermissionTypeNotRegisteredError{CustomError{fmt.Sprintf("The permission type \"%s\" has not been registered. Please use LogicalPermissions::addType() or LogicalPermissions::setTypes() to register permission types.", permtype)}}
+    return false, &PermissionTypeNotRegisteredError{CustomError{fmt.Sprintf("The permission type \"%s\" has not been registered. Please use LogicalPermissions::AddType() or LogicalPermissions::SetTypes() to register permission types.", permtype)}}
   }
   
   callback, err_custom := this.GetTypeCallback(permtype)

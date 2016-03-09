@@ -87,7 +87,7 @@ func main() {
 }
 ```
 
-The main api method is [`LogicalPermissions::CheckAccess()`](#checkaccess), which checks the access for a **permission tree**. A permission tree is a bundle of permissions that apply to a specific action. Let"s say for example that you want to restrict access for updating a user. You"d like only users with the role "admin" to be able to update any user, but users should also be able to update their own user data (or at least some of it). With the structure this package provides, these conditions could be expressed elegantly in a permission tree as such:
+The main api method is [`LogicalPermissions::CheckAccess()`](#checkaccess), which checks the access for a **permission tree**. A permission tree is a bundle of permissions that apply to a specific action. Let's say for example that you want to restrict access for updating a user. You'd like only users with the role "admin" to be able to update any user, but users should also be able to update their own user data (or at least some of it). With the structure this package provides, these conditions could be expressed elegantly in a permission tree as such:
 
 ```go
 `{
@@ -125,7 +125,7 @@ Examples:
 
 ## Logic gates
 
-Currently supported logic gates are [AND](#and), [NAND](#nand), [OR](#or), [NOR](#nor), [XOR](#xor) and [NOT](#not). You can put logic gates anywhere in a permission tree and nest them to your heart"s content. All logic gates support a map (or json object) or slice (or json array) as their value, except the NOT gate which has special rules. If a map (or json object) or slice (or json array) of values does not have a logic gate as its key, an OR gate will be assumed.
+Currently supported logic gates are [AND](#and), [NAND](#nand), [OR](#or), [NOR](#nor), [XOR](#xor) and [NOT](#not). You can put logic gates anywhere in a permission tree and nest them to your heart's content. All logic gates support a map (or json object) or slice (or json array) as their value, except the NOT gate which has special rules. If a map (or json object) or slice (or json array) of values does not have a logic gate as its key, an OR gate will be assumed.
 
 ### AND
 

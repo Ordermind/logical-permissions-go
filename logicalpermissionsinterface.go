@@ -34,6 +34,14 @@ type LogicalPermissionsInterface interface {
   GetTypeCallback(name string) (func(string, map[string]interface{}) (bool, error), error)
   
   /**
+   * Changes the callback for an existing permission type.
+   * @param {string} name - The name of the permission type.
+   * @param {func(string, map[string]interface{}) (bool, error)} callback - The callback that evaluates the permission type. Upon calling CheckAccess() the registered callback will be passed two parameters: a permission string (such as a role) and the context map passed to CheckAccess(). The permission will always be a single string even if for example multiple roles are accepted. In that case the callback will be called once for each role that is to be evaluated. The callback should return a boolean which determines whether access should be granted. It should also return an error, or nil if no error occurred.
+   * @returns {error} if something goes wrong, or nil if no error occurs.
+   */
+  SetTypeCallback(name string, callback func(string, map[string]interface{}) (bool, error)) error
+  
+  /**
    * Gets all defined permission types.
    * @returns {map[string]func(string, map[string]interface{}) (bool, error)} permission types with the structure {"name": callback, "name2": callback2, ...}. This map is shallow copied.
    */
@@ -54,7 +62,7 @@ type LogicalPermissionsInterface interface {
   
   /**
    * Sets the bypass access callback.
-   * @param {callback func(map[string]interface{}) (bool, error)} callback - The callback that evaluates access bypassing. Upon calling CheckAccess() the registered bypass callback will be passed one parameter, which is the context map passed to CheckAccess(). It should return a boolean which determines whether bypass access should be granted. It should also return an error, or nil if no error occurred.
+   * @param {func(map[string]interface{}) (bool, error)} callback - The callback that evaluates access bypassing. Upon calling CheckAccess() the registered bypass callback will be passed one parameter, which is the context map passed to CheckAccess(). It should return a boolean which determines whether bypass access should be granted. It should also return an error, or nil if no error occurred.
    */
   SetBypassCallback(callback func(map[string]interface{}) (bool, error))
   

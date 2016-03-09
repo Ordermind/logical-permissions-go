@@ -58,6 +58,20 @@ func (this *LogicalPermissions) GetTypeCallback(name string) (func(string, map[s
   return types[name], nil
 }
 
+func (this *LogicalPermissions) SetTypeCallback(name string, callback func(string, map[string]interface{}) (bool, error)) error {
+  if name == "" {
+    return &InvalidArgumentValueError{CustomError{"The name parameter cannot be empty."}}
+  }
+  exists, _ := this.TypeExists(name)
+  if(!exists) {
+    return &PermissionTypeNotRegisteredError{CustomError{fmt.Sprintf("The permission type \"%s\" has not been registered. Please use LogicalPermissions::AddType() or LogicalPermissions::SetTypes() to register permission types.", name)}}
+  }
+  types := this.GetTypes()
+  types[name] = callback
+  this.SetTypes(types)
+  return nil
+}
+
 func (this *LogicalPermissions) GetTypes() map[string]func(string, map[string]interface{}) (bool, error) {
   if this.types == nil {
     this.types = make(map[string]func(string, map[string]interface{}) (bool, error))

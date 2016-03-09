@@ -411,6 +411,31 @@ LogicalPermissions::GetTypeCallback(name string) (func(string, map[string]interf
 ---
 
 
+### SetTypeCallback
+
+Changes the callback for an existing permission type.
+
+```go
+LogicalPermissions::SetTypeCallback(name string, callback func(string, map[string]interface{}) (bool, error)) error
+```
+
+
+**Parameters:**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `name` | **string** | The name of the permission type. |
+| `callback` | **func(string, map[string]interface{}) (bool, error)** | The callback that evaluates the permission type. Upon calling CheckAccess() the registered callback will be passed two parameters: a permission string (such as a role) and the context map passed to CheckAccess(). The permission will always be a single string even if for example multiple roles are accepted. In that case the callback will be called once for each role that is to be evaluated. The callback should return a boolean which determines whether access should be granted. It should also return an error, or nil if no error occurred. |
+
+
+**Return Value:**
+
+**error** if something goes wrong, or **nil** if no error occurs.
+
+
+---
+
+
 ### GetTypes
 
 Gets all defined permission types.

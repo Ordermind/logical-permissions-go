@@ -2,6 +2,7 @@ package logicalpermissions_test
 
 import (
   "fmt"
+  "sort"
   "testing"
   "github.com/stretchr/testify/assert"
   . "github.com/ordermind/logical-permissions-go"
@@ -153,6 +154,56 @@ func TestGetTypeCallback(t *testing.T) {
   assert.Equal(t, fmt.Sprintf("%v", callback1), fmt.Sprintf("%v", callback2))
 }
 
+/*-------------LogicalPermissions::SetTypeCallback()--------------*/
+
+func TestSetTypeCallbackParamNameEmpty(t *testing.T) {
+  t.Parallel()
+  lp := LogicalPermissions{}
+  callback := func(string, map[string]interface{}) (bool, error) {return true, nil}
+  err := lp.SetTypeCallback("", callback)
+  if assert.Error(t, err) {
+    assert.IsType(t, &InvalidArgumentValueError{}, err)
+  }
+}
+
+func TestSetTypeCallbackUnregisteredType(t *testing.T) {
+  t.Parallel()
+  lp := LogicalPermissions{}
+  callback := func(string, map[string]interface{}) (bool, error) {return true, nil}
+  err := lp.SetTypeCallback("test", callback)
+  if assert.Error(t, err) {
+    assert.IsType(t, &PermissionTypeNotRegisteredError{}, err)
+  }
+}
+  
+func TestSetTypeCallback(t *testing.T) {
+  t.Parallel()
+  lp := LogicalPermissions{}
+  err := lp.AddType("test", func(string, map[string]interface{}) (bool, error) {return true, nil})
+  if err != nil {
+    t.Error(fmt.Sprintf("LogicalPermissions::AddType() returned an error: %s", err))
+  }
+  callback := func(string, map[string]interface{}) (bool, error) {return true, nil}
+  
+  callback2, err2 := lp.GetTypeCallback("test")
+  if err2 != nil {
+    t.Error(fmt.Sprintf("LogicalPermissions::GetTypeCallback() returned an error: %s", err2))
+  }
+
+  assert.NotEqual(t, fmt.Sprintf("%v", callback), fmt.Sprintf("%v", callback2))
+
+  err3 := lp.SetTypeCallback("test", callback)
+  if err3 != nil {
+    t.Error(fmt.Sprintf("LogicalPermissions::SetTypeCallback() returned an error: %s", err3))
+  }
+  
+  callback3, err4 := lp.GetTypeCallback("test")
+  if err4 != nil {
+    t.Error(fmt.Sprintf("LogicalPermissions::GetTypeCallback() returned an error: %s", err4))
+  }
+  assert.Equal(t, fmt.Sprintf("%v", callback), fmt.Sprintf("%v", callback3))
+}
+
 /*-------------LogicalPermissions::GetTypes()--------------*/
 
 func TestGetTypes(t *testing.T) {
@@ -232,7 +283,11 @@ func TestSetBypassCallback(t *testing.T) {
 func TestGetValidPermissionKeys(t *testing.T) {
   t.Parallel()
   lp := LogicalPermissions{}
-  assert.Equal(t, lp.GetValidPermissionKeys(), []string{"no_bypass", "AND", "NAND", "OR", "NOR", "XOR", "NOT"})
+  keys := lp.GetValidPermissionKeys()
+  sort.Strings(keys)
+  keys2 := []string{"no_bypass", "AND", "NAND", "OR", "NOR", "XOR", "NOT"}
+  sort.Strings(keys2)
+  assert.Equal(t, keys, keys2)
   types := map[string]func(string, map[string]interface{}) (bool, error){
     "flag": func(flag string, context map[string]interface{}) (bool, error) {
       if flag == "testflag" {
@@ -289,7 +344,11 @@ func TestGetValidPermissionKeys(t *testing.T) {
   }
   err := lp.SetTypes(types)
   assert.Nil(t, err)
-  assert.Equal(t, lp.GetValidPermissionKeys(), []string{"no_bypass", "AND", "NAND", "OR", "NOR", "XOR", "NOT", "flag", "role", "misc"})
+  keys3 := lp.GetValidPermissionKeys()
+  sort.Strings(keys3)
+  keys4 := []string{"no_bypass", "AND", "NAND", "OR", "NOR", "XOR", "NOT", "flag", "role", "misc"}
+  sort.Strings(keys4)
+  assert.Equal(t, keys3, keys4)
 }
 
 /*-------------LogicalPermissions::CheckAccess()--------------*/

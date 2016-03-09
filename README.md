@@ -533,7 +533,7 @@ LogicalPermissions::GetValidPermissionKeys() []string
 Checks access for a permission tree.
 
 ```go
-LogicalPermissions::CheckAccess(permissions interface{}, context map[string]interface{}) (bool, error)
+LogicalPermissions::CheckAccess(permissions interface{}, context map[string]interface{}, allow_bypass bool) (bool, error)
 ```
 
 
@@ -543,6 +543,7 @@ LogicalPermissions::CheckAccess(permissions interface{}, context map[string]inte
 |-----------|------|-------------|
 | `permissions` | **map[string]interface{} or json string** | The permission tree to be evaluated. The permission tree can either be a map or a string containing a json object. |
 | `context` | **map[string]interface{}** | A context map that could for example contain the evaluated user and document. |
+| `allow_bypass` | **bool** | Determines whether bypassing access should be allowed. Set this to true for normal behavior. |
 
 
 **Return Values:**

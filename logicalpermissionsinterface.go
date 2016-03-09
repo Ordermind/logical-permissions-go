@@ -76,8 +76,9 @@ type LogicalPermissionsInterface interface {
    * Checks access for a permission tree.
    * @param {map[string]interface{} or json string} permissions - The permission tree to be evaluated. The permission tree can either be a map or a string containing a json object.
    * @param {map[string]interface{}} context - A context map that could for example contain the evaluated user and document.
+   * @param {bool} allow_bypass - Determines whether bypassing access should be allowed. Set this to true for normal behavior.
    * @returns {bool} true if access is granted or false if access is denied.
    * @returns {error} if something goes wrong, or nil if no error occurs.
    */
-  CheckAccess(permissions interface{}, context map[string]interface{}) (bool, error)
+  CheckAccess(permissions interface{}, context map[string]interface{}, allow_bypass bool) (bool, error)
 } 

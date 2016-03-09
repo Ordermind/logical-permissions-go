@@ -59,6 +59,12 @@ type LogicalPermissionsInterface interface {
   SetBypassCallback(callback func(map[string]interface{}) (bool, error))
   
   /**
+   * Gets all keys that can be part of a permission tree.
+   * @returns []string valid permission keys
+   */
+  GetValidPermissionKeys() []string
+  
+  /**
    * Checks access for a permission tree.
    * @param {map[string]interface{} or json string} permissions - The permission tree to be evaluated. The permission tree can either be a map or a string containing a json object.
    * @param {map[string]interface{}} context - A context map that could for example contain the evaluated user and document.

@@ -91,6 +91,18 @@ func (this *LogicalPermissions) SetBypassCallback(callback func(map[string]inter
   this.bypass_callback = callback
 }
 
+func (this *LogicalPermissions) GetValidPermissionKeys() []string {
+  core_keys := this.getCorePermissionKeys()
+  types := this.GetTypes()
+  type_keys := make([]string, len(types))
+  i := 0
+  for k := range types {
+    type_keys[i] = k
+    i++
+  }
+  return append(core_keys, type_keys...)
+}
+
 func (this *LogicalPermissions) CheckAccess(permissions interface{}, context map[string]interface{}) (bool, error) {
   map_permissions, err := this.preparePermissions(permissions)
   if err != nil {
@@ -129,6 +141,10 @@ func (this *LogicalPermissions) CheckAccess(permissions interface{}, context map
   }
 
   return false, nil
+}
+
+func (this *LogicalPermissions) getCorePermissionKeys() []string {
+  return []string{"no_bypass", "AND", "NAND", "OR", "NOR", "XOR", "NOT"}
 }
 
 func (this *LogicalPermissions) preparePermissions(permissions interface{}) (map[string]interface{}, error) {

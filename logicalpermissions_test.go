@@ -227,6 +227,71 @@ func TestSetBypassCallback(t *testing.T) {
   assert.Equal(t, fmt.Sprintf("%v", callback), fmt.Sprintf("%v", lp.GetBypassCallback()))
 }
 
+/*------------LogicalPermissions::getValidPermissionKeys()------------*/
+
+func TestGetValidPermissionKeys(t *testing.T) {
+  t.Parallel()
+  lp := LogicalPermissions{}
+  assert.Equal(t, lp.GetValidPermissionKeys(), []string{"no_bypass", "AND", "NAND", "OR", "NOR", "XOR", "NOT"})
+  types := map[string]func(string, map[string]interface{}) (bool, error){
+    "flag": func(flag string, context map[string]interface{}) (bool, error) {
+      if flag == "testflag" {
+        user, ok := context["user"]
+        if !ok {
+          return false, nil 
+        }
+        if typed_user, ok := user.(map[string]interface{}); ok {
+          testflag, ok := typed_user["testflag"]
+          if !ok {
+            return false, nil 
+          }
+          if bool_never_bypass, ok := testflag.(bool); ok {
+            access := bool_never_bypass
+            return access, nil
+          }
+        }
+      }
+      return false, nil
+    },
+    "role": func(role string, context map[string]interface{}) (bool, error) {
+      user, ok := context["user"]
+      if !ok {
+        return false, nil 
+      }
+      if typed_user, ok := user.(map[string]interface{}); ok {
+        roles, ok := typed_user["roles"]
+        if !ok {
+          return false, nil 
+        }
+        if typed_roles, ok := roles.([]string); ok {
+          has_role := stringInSlice(role, typed_roles)
+          return has_role, nil
+        }
+      }
+      return false, nil
+    },
+    "misc": func(item string, context map[string]interface{}) (bool, error) {
+      user, ok := context["user"]
+      if !ok {
+        return false, nil 
+      }
+      if typed_user, ok := user.(map[string]interface{}); ok {
+        item_value, ok := typed_user[item]
+        if !ok {
+          return false, nil 
+        }
+        if typed_item_value, ok := item_value.(bool); ok {
+          return typed_item_value, nil
+        }
+      }
+      return false, nil
+    },
+  }
+  err := lp.SetTypes(types)
+  assert.Nil(t, err)
+  assert.Equal(t, lp.GetValidPermissionKeys(), []string{"no_bypass", "AND", "NAND", "OR", "NOR", "XOR", "NOT", "flag", "role", "misc"})
+}
+
 /*-------------LogicalPermissions::CheckAccess()--------------*/
 
 func TestCheckAccessParamPermissionsWrongPermissionType(t *testing.T) {

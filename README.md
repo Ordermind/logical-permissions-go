@@ -486,6 +486,23 @@ LogicalPermissions::SetBypassCallback(callback func(map[string]interface{}) (boo
 ---
 
 
+### GetValidPermissionKeys
+
+Gets all keys that can be part of a permission tree.
+
+```go
+LogicalPermissions::GetValidPermissionKeys() []string
+```
+
+
+**Return Value:**
+
+**[]string** Valid permission keys
+
+
+---
+
+
 ### CheckAccess
 
 Checks access for a permission tree.

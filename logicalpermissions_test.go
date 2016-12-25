@@ -493,6 +493,21 @@ func TestCheckAccessBypassAccessCheckContextPassing(t *testing.T) {
   lp.CheckAccess(make(map[string]interface{}), map[string]interface{}{"user": user})
 }
 
+func TestCheckAccessBypassAccessIllegalDescendant(t *testing.T) {
+  t.Parallel()
+  lp := LogicalPermissions{}
+  permissions := map[string]interface{}{
+    "OR": map[string]interface{}{
+      "no_bypass": true,
+    },
+  }
+  access, err := lp.CheckAccess(permissions, make(map[string]interface{}))
+  assert.False(t, access)
+  if assert.Error(t, err) {
+    assert.IsType(t, &InvalidArgumentValueError{}, err)
+  }
+}
+
 func TestCheckAccessBypassAccessAllow(t *testing.T) {
   t.Parallel()
   lp := LogicalPermissions{}

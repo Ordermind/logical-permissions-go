@@ -2361,6 +2361,420 @@ func TestCheckAccessSingleItemNOTMapJSON(t *testing.T) {
   assert.Nil(t, err)
 }
 
+func TestCheckAccessBoolTRUEIllegalDescendant(t *testing.T) {
+  t.Parallel()
+  lp := LogicalPermissions{}
+
+  map_permissions := map[string]interface{}{
+    "role": [1]interface{}{true},
+  }
+  access, err := lp.CheckAccess(map_permissions, make(map[string]interface{}))
+  assert.False(t, access)
+  if assert.Error(t, err) {
+    assert.IsType(t, &InvalidArgumentValueError{}, err)
+  }
+
+  json_permissions := `{
+    "role": [true]
+  }`
+  access, err = lp.CheckAccess(json_permissions, make(map[string]interface{}))
+  assert.False(t, access)
+  if assert.Error(t, err) {
+    assert.IsType(t, &InvalidArgumentValueError{}, err)
+  }
+}
+
+func TestCheckAccessBoolTRUE(t *testing.T) {
+  t.Parallel()
+  lp := LogicalPermissions{}
+
+  bool_permissions := true
+  access, err := lp.CheckAccess(bool_permissions, make(map[string]interface{}))
+  assert.True(t, access)
+  assert.Nil(t, err)
+}
+
+func TestCheckAccessBoolTRUESlice(t *testing.T) {
+  t.Parallel()
+  lp := LogicalPermissions{}
+
+  slice_permissions := []interface{}{true}
+  access, err := lp.CheckAccess(slice_permissions, make(map[string]interface{}))
+  assert.True(t, access)
+  assert.Nil(t, err)
+
+  json_permissions := "[true]"
+  access, err = lp.CheckAccess(json_permissions, make(map[string]interface{}))
+  assert.True(t, access)
+  assert.Nil(t, err)
+}
+
+func TestCheckAccessBoolFALSEIllegalDescendant(t *testing.T) {
+  t.Parallel()
+  lp := LogicalPermissions{}
+
+  map_permissions := map[string]interface{}{
+    "role": [1]interface{}{false},
+  }
+  access, err := lp.CheckAccess(map_permissions, make(map[string]interface{}))
+  assert.False(t, access)
+  if assert.Error(t, err) {
+    assert.IsType(t, &InvalidArgumentValueError{}, err)
+  }
+
+  json_permissions := `{
+    "role": [false]
+  }`
+  access, err = lp.CheckAccess(json_permissions, make(map[string]interface{}))
+  assert.False(t, access)
+  if assert.Error(t, err) {
+    assert.IsType(t, &InvalidArgumentValueError{}, err)
+  }
+}
+
+func TestCheckAccessBoolFALSE(t *testing.T) {
+  t.Parallel()
+  lp := LogicalPermissions{}
+
+  bool_permissions := false
+  access, err := lp.CheckAccess(bool_permissions, make(map[string]interface{}))
+  assert.False(t, access)
+  assert.Nil(t, err)
+}
+
+func TestCheckAccessBoolFALSESlice(t *testing.T) {
+  t.Parallel()
+  lp := LogicalPermissions{}
+
+  slice_permissions := []interface{}{false}
+  access, err := lp.CheckAccess(slice_permissions, make(map[string]interface{}))
+  assert.False(t, access)
+  assert.Nil(t, err)
+
+  str_permissions := "[false]"
+  access, err = lp.CheckAccess(str_permissions, make(map[string]interface{}))
+  assert.False(t, access)
+  assert.Nil(t, err)
+}
+
+func TestCheckAccessBoolFALSEBypass(t *testing.T) {
+  t.Parallel()
+  lp := LogicalPermissions{}
+  bypass_callback := func(context map[string]interface{}) (bool, error) {
+    return true, nil
+  }
+  lp.SetBypassCallback(bypass_callback)
+
+  bool_permissions := false
+  access, err := lp.CheckAccess(bool_permissions, make(map[string]interface{}))
+  assert.True(t, access)
+  assert.Nil(t, err)
+}
+
+func TestCheckAccessBoolFALSENoBypass(t *testing.T) {
+  t.Parallel()
+  lp := LogicalPermissions{}
+  bypass_callback := func(context map[string]interface{}) (bool, error) {
+    return true, nil
+  }
+  lp.SetBypassCallback(bypass_callback)
+
+  map_permissions := map[string]interface{}{
+    "no_bypass": true,
+    "0": false,
+  }
+  access, err := lp.CheckAccess(map_permissions, make(map[string]interface{}))
+  assert.False(t, access)
+  assert.Nil(t, err)
+
+  json_permissions := `{
+    "no_bypass": true,
+    "0": false
+  }`
+  access, err = lp.CheckAccess(json_permissions, make(map[string]interface{}))
+  assert.False(t, access)
+  assert.Nil(t, err)
+}
+
+func TestCheckAccessStringTRUEIllegalChildren(t *testing.T) {
+  t.Parallel()
+  lp := LogicalPermissions{}
+
+  map_permissions := map[string]interface{}{
+    "TRUE": false,
+  }
+  access, err := lp.CheckAccess(map_permissions, make(map[string]interface{}))
+  assert.False(t, access)
+  if assert.Error(t, err) {
+    assert.IsType(t, &InvalidArgumentValueError{}, err)
+  }
+
+  map_permissions = map[string]interface{}{
+    "TRUE": make([]interface{}, 0),
+  }
+  access, err = lp.CheckAccess(map_permissions, make(map[string]interface{}))
+  assert.False(t, access)
+  if assert.Error(t, err) {
+    assert.IsType(t, &InvalidArgumentValueError{}, err)
+  }
+
+  json_permissions := `{
+    "TRUE": false
+  }`
+  access, err = lp.CheckAccess(json_permissions, make(map[string]interface{}))
+  assert.False(t, access)
+  if assert.Error(t, err) {
+    assert.IsType(t, &InvalidArgumentValueError{}, err)
+  }
+
+  json_permissions = `{
+    "TRUE": []
+  }`
+  access, err = lp.CheckAccess(json_permissions, make(map[string]interface{}))
+  assert.False(t, access)
+  if assert.Error(t, err) {
+    assert.IsType(t, &InvalidArgumentValueError{}, err)
+  }
+}
+
+func TestCheckAccessStringTRUEIllegalDescendant(t *testing.T) {
+  t.Parallel()
+  lp := LogicalPermissions{}
+
+  map_permissions := map[string]interface{}{
+    "role": [1]interface{}{"TRUE"},
+  }
+  access, err := lp.CheckAccess(map_permissions, make(map[string]interface{}))
+  assert.False(t, access)
+  if assert.Error(t, err) {
+    assert.IsType(t, &InvalidArgumentValueError{}, err)
+  }
+
+  json_permissions := `{
+    "role": ["TRUE"]
+  }`
+  access, err = lp.CheckAccess(json_permissions, make(map[string]interface{}))
+  assert.False(t, access)
+  if assert.Error(t, err) {
+    assert.IsType(t, &InvalidArgumentValueError{}, err)
+  }
+}
+
+func TestCheckAccessStringTRUE(t *testing.T) {
+  t.Parallel()
+  lp := LogicalPermissions{}
+
+  str_permissions := "TRUE"
+  access, err := lp.CheckAccess(str_permissions, make(map[string]interface{}))
+  assert.True(t, access)
+  assert.Nil(t, err)
+}
+
+func TestCheckAccessStringTRUESlice(t *testing.T) {
+  t.Parallel()
+  lp := LogicalPermissions{}
+
+  slice_permissions := []interface{}{"TRUE"}
+  access, err := lp.CheckAccess(slice_permissions, make(map[string]interface{}))
+  assert.True(t, access)
+  assert.Nil(t, err)
+
+  json_permissions := `[
+    "TRUE"
+  ]`
+  access, err = lp.CheckAccess(json_permissions, make(map[string]interface{}))
+  assert.True(t, access)
+  assert.Nil(t, err)
+}
+
+func TestCheckAccessStringFALSEIllegalChildren(t *testing.T) {
+  t.Parallel()
+  lp := LogicalPermissions{}
+
+  map_permissions := map[string]interface{}{
+    "FALSE": true,
+  }
+  access, err := lp.CheckAccess(map_permissions, make(map[string]interface{}))
+  assert.False(t, access)
+  if assert.Error(t, err) {
+    assert.IsType(t, &InvalidArgumentValueError{}, err)
+  }
+
+  map_permissions = map[string]interface{}{
+    "FALSE": make([]interface{}, 0),
+  }
+  access, err = lp.CheckAccess(map_permissions, make(map[string]interface{}))
+  assert.False(t, access)
+  if assert.Error(t, err) {
+    assert.IsType(t, &InvalidArgumentValueError{}, err)
+  }
+
+  json_permissions := `{
+    "FALSE": true
+  }`
+  access, err = lp.CheckAccess(json_permissions, make(map[string]interface{}))
+  assert.False(t, access)
+  if assert.Error(t, err) {
+    assert.IsType(t, &InvalidArgumentValueError{}, err)
+  }
+
+  json_permissions = `{
+    "FALSE": []
+  }`
+  access, err = lp.CheckAccess(json_permissions, make(map[string]interface{}))
+  assert.False(t, access)
+  if assert.Error(t, err) {
+    assert.IsType(t, &InvalidArgumentValueError{}, err)
+  }
+}
+
+func TestCheckAccessStringFALSEIllegalDescendant(t *testing.T) {
+  t.Parallel()
+  lp := LogicalPermissions{}
+
+  map_permissions := map[string]interface{}{
+    "role": [1]interface{}{"FALSE"},
+  }
+  access, err := lp.CheckAccess(map_permissions, make(map[string]interface{}))
+  assert.False(t, access)
+  if assert.Error(t, err) {
+    assert.IsType(t, &InvalidArgumentValueError{}, err)
+  }
+
+  json_permissions := `{
+    "role": ["FALSE"]
+  }`
+  access, err = lp.CheckAccess(json_permissions, make(map[string]interface{}))
+  assert.False(t, access)
+  if assert.Error(t, err) {
+    assert.IsType(t, &InvalidArgumentValueError{}, err)
+  }
+}
+
+func TestCheckAccessStringFALSE(t *testing.T) {
+  t.Parallel()
+  lp := LogicalPermissions{}
+
+  str_permissions := "FALSE"
+  access, err := lp.CheckAccess(str_permissions, make(map[string]interface{}))
+  assert.False(t, access)
+  assert.Nil(t, err)
+}
+
+func TestCheckAccessStringFALSESlice(t *testing.T) {
+  t.Parallel()
+  lp := LogicalPermissions{}
+
+  slice_permissions := []interface{}{"FALSE"}
+  access, err := lp.CheckAccess(slice_permissions, make(map[string]interface{}))
+  assert.False(t, access)
+  assert.Nil(t, err)
+
+  json_permissions := `[
+    "FALSE"
+  ]`
+  access, err = lp.CheckAccess(json_permissions, make(map[string]interface{}))
+  assert.False(t, access)
+  assert.Nil(t, err)
+}
+
+func TestCheckAccessStringFALSEBypass(t *testing.T) {
+  t.Parallel()
+  lp := LogicalPermissions{}
+  bypass_callback := func(context map[string]interface{}) (bool, error) {
+    return true, nil
+  }
+  lp.SetBypassCallback(bypass_callback)
+
+  str_permissions := "FALSE"
+  access, err := lp.CheckAccess(str_permissions, make(map[string]interface{}))
+  assert.True(t, access)
+  assert.Nil(t, err)
+}
+
+func TestCheckAccessStringFALSENoBypass(t *testing.T) {
+  t.Parallel()
+  lp := LogicalPermissions{}
+  bypass_callback := func(context map[string]interface{}) (bool, error) {
+    return true, nil
+  }
+  lp.SetBypassCallback(bypass_callback)
+
+  map_permissions := map[string]interface{}{
+    "no_bypass": true,
+    "0": "FALSE",
+  }
+  access, err := lp.CheckAccess(map_permissions, make(map[string]interface{}))
+  assert.False(t, access)
+  assert.Nil(t, err)
+
+  json_permissions := `{
+    "no_bypass": true,
+    "0": "FALSE"
+  }`
+  access, err = lp.CheckAccess(json_permissions, make(map[string]interface{}))
+  assert.False(t, access)
+  assert.Nil(t, err)
+}
+
+func TestMixedBooleans(t *testing.T) {
+  t.Parallel()
+  lp := LogicalPermissions{}
+
+  slice_permissions := []interface{}{"FALSE", true}
+  access, err := lp.CheckAccess(slice_permissions, make(map[string]interface{}))
+  assert.True(t, access)
+  assert.Nil(t, err)
+
+  json_permissions := `[
+    "FALSE",
+    true
+  ]`
+  access, err = lp.CheckAccess(json_permissions, make(map[string]interface{}))
+  assert.True(t, access)
+  assert.Nil(t, err)
+
+  map_permissions := map[string]interface{}{
+    "OR": []interface{}{
+      false,
+      "TRUE",
+    },
+  }
+  access, err = lp.CheckAccess(map_permissions, make(map[string]interface{}))
+  assert.True(t, access)
+  assert.Nil(t, err)
+
+  json_permissions = `{
+    "OR": [
+      false,
+      "TRUE"
+    ]
+  }`
+  access, err = lp.CheckAccess(json_permissions, make(map[string]interface{}))
+  assert.True(t, access)
+  assert.Nil(t, err)
+
+  map_permissions = map[string]interface{}{
+    "AND": []interface{}{
+      "TRUE",
+      false,
+    },
+  }
+  access, err = lp.CheckAccess(map_permissions, make(map[string]interface{}))
+  assert.False(t, access)
+  assert.Nil(t, err)
+
+  json_permissions = `{
+    "AND": [
+      "TRUE",
+      false
+    ]
+  }`
+  access, err = lp.CheckAccess(json_permissions, make(map[string]interface{}))
+  assert.False(t, access)
+  assert.Nil(t, err)
+}
+
 func TestCheckAccessNestedLogic(t *testing.T) {
   t.Parallel()
   lp := LogicalPermissions{}
@@ -2397,7 +2811,9 @@ func TestCheckAccessNestedLogic(t *testing.T) {
           ]
         }
       }
-    }
+    },
+    "0": false,
+    "1": "FALSE"
   }`
 
   user := map[string]interface{}{
@@ -2456,7 +2872,9 @@ func TestCheckAccessLogicGateFirst(t *testing.T) {
             ]
           }
         }
-      }
+      },
+      "0": true,
+      "1": "TRUE"
     }
   }`
 

@@ -200,17 +200,19 @@ func (this *LogicalPermissions) preparePermissions(permissions interface{}) (map
     }
     json_permissions = string(tmpSlice)
   } else if tmpString, okString := interface{}(permissions).(string); okString {
+    if tmpString == "TRUE" || tmpString == "FALSE" {
+      return map[string]interface{}{"OR": []interface{}{tmpString}}, nil
+    }
     json_permissions = tmpString
   } else if tmpBool, okBool := interface{}(permissions).(bool); okBool {
-    if tmpBool == true {
-      json_permissions = "TRUE"
-    } else if tmpBool == false {
-      json_permissions = "FALSE"
-    }
+    return map[string]interface{}{"OR": []interface{}{tmpBool}}, nil
   } else {
     return nil, &CustomError{fmt.Sprintf("permissions must be a boolean, a string, a slice or a map[string]interface{}. Evaluated permissions: %v", permissions)}
   }
 
+  if json_permissions[:1] == "[" {
+    json_permissions = fmt.Sprintf("{\"OR\": %s}", json_permissions)
+  }
   map_permissions := make(map[string]interface{})
   err := json.Unmarshal([]byte(json_permissions), &map_permissions)
   if err != nil {

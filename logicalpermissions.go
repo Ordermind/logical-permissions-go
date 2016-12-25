@@ -24,7 +24,7 @@ func (this *LogicalPermissions) AddType(name string, callback func(string, map[s
   if exists {
     return &PermissionTypeAlreadyExistsError{CustomError{fmt.Sprintf("The permission type \"%s\" already exists! If you want to change the callback for an existing type, please use LogicalPermissions::SetTypeCallback().", name)}}
   }
-  
+
   types := this.GetTypes()
   types[name] = callback
   this.SetTypes(types)
@@ -33,7 +33,7 @@ func (this *LogicalPermissions) AddType(name string, callback func(string, map[s
 
 func (this *LogicalPermissions) RemoveType(name string) error {
   if name == "" {
-    return &InvalidArgumentValueError{CustomError{"The name parameter cannot be empty."}}  
+    return &InvalidArgumentValueError{CustomError{"The name parameter cannot be empty."}}
   }
   exists, _ := this.TypeExists(name)
   if(!exists) {
@@ -143,19 +143,19 @@ func (this *LogicalPermissions) CheckAccessNoBypass(permissions interface{}, con
 func (this *LogicalPermissions) checkAccess(permissions interface{}, context map[string]interface{}, allow_bypass bool) (bool, error) {
   map_permissions, err := this.preparePermissions(permissions)
   if err != nil {
-    return false, err 
+    return false, err
   }
 
   //Bypass access check
-  if allow_bypass {
-    if no_bypass, ok := map_permissions["no_bypass"]; ok {
+  if no_bypass, ok := map_permissions["no_bypass"]; ok {
+    if allow_bypass {
       result, err_custom := this.checkAllowBypass(no_bypass, context)
       if err_custom != nil {
         return false, err_custom
       }
       allow_bypass = result
-      delete(map_permissions, "no_bypass")
     }
+    delete(map_permissions, "no_bypass")
   }
   if allow_bypass {
     access, err_custom := this.checkBypassAccess(context)
@@ -164,7 +164,7 @@ func (this *LogicalPermissions) checkAccess(permissions interface{}, context map
       return false, err_custom
     }
     if access {
-      return access, nil 
+      return access, nil
     }
   }
 
@@ -198,7 +198,7 @@ func (this *LogicalPermissions) preparePermissions(permissions interface{}) (map
   } else {
     return nil, &CustomError{fmt.Sprintf("permissions must be a string or a map[string]interface{}. Evaluated permissions: %v", permissions)}
   }
-  
+
   map_permissions := make(map[string]interface{})
   err := json.Unmarshal([]byte(json_permissions), &map_permissions)
   if err != nil {
@@ -227,7 +227,7 @@ func (this *LogicalPermissions) checkBypassAccess(context map[string]interface{}
   if bypass_callback != nil {
     bypass_access, err_custom := bypass_callback(context)
     if err_custom != nil {
-      return false, &CustomError{err_custom.Error()} 
+      return false, &CustomError{err_custom.Error()}
     }
     return bypass_access, nil
   }
@@ -241,10 +241,10 @@ func (this *LogicalPermissions) dispatch(permissions interface{}, permtype strin
       return false, err_custom
     }
     return access, nil
-  } 
+  }
   if slice_permissions, ok := permissions.([]interface{}); ok {
     if len(slice_permissions) > 0 {
-      access, err_custom := this.processOR(slice_permissions, permtype, context) 
+      access, err_custom := this.processOR(slice_permissions, permtype, context)
       if err_custom != nil {
         return false, err_custom
       }
@@ -304,7 +304,7 @@ func (this *LogicalPermissions) dispatch(permissions interface{}, permtype strin
       }
       if _, err := strconv.Atoi(key); err != nil {
         if permtype == "" {
-          permtype = key 
+          permtype = key
         } else {
           return false, &InvalidArgumentValueError{CustomError{fmt.Sprintf("You cannot put a permission type as a descendant to another permission type. Existing type: %s. Evaluated permissions: %v", permtype, map_permissions)}}
         }
@@ -313,7 +313,7 @@ func (this *LogicalPermissions) dispatch(permissions interface{}, permtype strin
       if _, ok := value.([]interface{}); ok {
         value_type = "slice"
       } else if _, ok := value.(map[string]interface{}); ok {
-        value_type = "map" 
+        value_type = "map"
       }
       if value_type == "slice" || value_type == "map" {
         access, err_custom := this.processOR(value, permtype, context)
@@ -331,15 +331,15 @@ func (this *LogicalPermissions) dispatch(permissions interface{}, permtype strin
 
     }
     if len(map_permissions) > 1 {
-      access, err_custom := this.processOR(map_permissions, permtype, context) 
+      access, err_custom := this.processOR(map_permissions, permtype, context)
       if err_custom != nil {
         return false, err_custom
       }
       return access, nil
     }
     return false, nil
-  } 
-    
+  }
+
   return false, &InvalidArgumentValueError{CustomError{fmt.Sprintf("A permission value must either be a string, a slice or an map. Evaluated permissions: %v", permissions)}}
 }
 
@@ -348,7 +348,7 @@ func (this *LogicalPermissions) processAND(permissions interface{}, permtype str
     if len(slice_permissions) < 1 {
       return false, &InvalidValueForLogicGateError{CustomError{fmt.Sprintf("The value slice of an AND gate must contain a minimum of one element. Current value: %v", slice_permissions)}}
     }
-    
+
     access := true
     for _, permission := range slice_permissions {
       result, err_custom := this.dispatch(permission, permtype, context)
@@ -357,7 +357,7 @@ func (this *LogicalPermissions) processAND(permissions interface{}, permtype str
       }
       access = access && result
       if !access {
-        break 
+        break
       }
     }
     return access, nil
@@ -366,7 +366,7 @@ func (this *LogicalPermissions) processAND(permissions interface{}, permtype str
     if len(map_permissions) < 1 {
       return false, &InvalidValueForLogicGateError{CustomError{fmt.Sprintf("The value map of an AND gate must contain a minimum of one element. Current value: %v", map_permissions)}}
     }
-    
+
     access := true
     for k, v := range map_permissions {
       subpermissions := map[string]interface{}{k: v}
@@ -376,12 +376,12 @@ func (this *LogicalPermissions) processAND(permissions interface{}, permtype str
       }
       access = access && result
       if !access {
-        break 
+        break
       }
     }
     return access, nil
   }
-    
+
   return false, &InvalidValueForLogicGateError{CustomError{fmt.Sprintf("The value of an AND gate must be a slice or map. Current value: %v", permissions)}}
 }
 
@@ -397,7 +397,7 @@ func (this *LogicalPermissions) processNAND(permissions interface{}, permtype st
   } else {
     return false, &InvalidValueForLogicGateError{CustomError{fmt.Sprintf("The value of a NAND gate must be a slice or map. Current value: %v", permissions)}}
   }
-  
+
   result, err_custom := this.processAND(permissions, permtype, context)
   if err_custom != nil {
     return false, err_custom
@@ -420,7 +420,7 @@ func (this *LogicalPermissions) processOR(permissions interface{}, permtype stri
       }
       access = access || result
       if access {
-        break 
+        break
       }
     }
     return access, nil
@@ -439,12 +439,12 @@ func (this *LogicalPermissions) processOR(permissions interface{}, permtype stri
       }
       access = access || result
       if access {
-        break 
+        break
       }
     }
     return access, nil
   }
-   
+
   return false, &InvalidValueForLogicGateError{CustomError{fmt.Sprintf("The value of an OR gate must be a slice or map. Current value: %v", permissions)}}
 }
 
@@ -460,7 +460,7 @@ func (this *LogicalPermissions) processNOR(permissions interface{}, permtype str
   } else {
     return false, &InvalidValueForLogicGateError{CustomError{fmt.Sprintf("The value of a NOR gate must be a slice or map. Current value: %v", permissions)}}
   }
-  
+
   result, err_custom := this.processOR(permissions, permtype, context)
   if err_custom != nil {
     return false, err_custom
@@ -474,7 +474,7 @@ func (this *LogicalPermissions) processXOR(permissions interface{}, permtype str
     if len(slice_permissions) < 2 {
       return false, &InvalidValueForLogicGateError{CustomError{fmt.Sprintf("The value slice of an XOR gate must contain a minimum of two elements. Current value: %v", slice_permissions)}}
     }
-    
+
     access := false
     count_true := 0
     count_false := 0
@@ -484,9 +484,9 @@ func (this *LogicalPermissions) processXOR(permissions interface{}, permtype str
         return false, err_custom
       }
       if result {
-        count_true++ 
+        count_true++
       } else {
-        count_false++ 
+        count_false++
       }
       if count_true > 0 && count_false > 0 {
         access = true
@@ -499,7 +499,7 @@ func (this *LogicalPermissions) processXOR(permissions interface{}, permtype str
     if len(map_permissions) < 2 {
       return false, &InvalidValueForLogicGateError{CustomError{fmt.Sprintf("The value map of an XOR gate must contain a minimum of two elements. Current value: %v", map_permissions)}}
     }
-    
+
     access := false
     count_true := 0
     count_false := 0
@@ -510,9 +510,9 @@ func (this *LogicalPermissions) processXOR(permissions interface{}, permtype str
         return false, err_custom
       }
       if result {
-        count_true++ 
+        count_true++
       } else {
-        count_false++ 
+        count_false++
       }
       if count_true > 0 && count_false > 0 {
         access = true
@@ -521,7 +521,7 @@ func (this *LogicalPermissions) processXOR(permissions interface{}, permtype str
     }
     return access, nil
   }
-    
+
   return false, &InvalidValueForLogicGateError{CustomError{fmt.Sprintf("The value of an XOR gate must be a slice or map. Current value: %v", permissions)}}
 }
 
@@ -537,7 +537,7 @@ func (this *LogicalPermissions) processNOT(permissions interface{}, permtype str
   } else {
     return false, &InvalidValueForLogicGateError{CustomError{fmt.Sprintf("The value of a NOT gate must be a map or string. Current value: %v", permissions)}}
   }
-  
+
   result, err_custom := this.dispatch(permissions, permtype, context)
   if err_custom != nil {
     return false, err_custom
@@ -554,10 +554,10 @@ func (this *LogicalPermissions) externalAccessCheck(permission string, permtype 
   if !exists {
     return false, &PermissionTypeNotRegisteredError{CustomError{fmt.Sprintf("The permission type \"%s\" has not been registered. Please use LogicalPermissions::AddType() or LogicalPermissions::SetTypes() to register permission types.", permtype)}}
   }
-  
+
   callback, err_custom := this.GetTypeCallback(permtype)
   if err_custom != nil {
-    return false, &CustomError{err_custom.Error()} 
+    return false, &CustomError{err_custom.Error()}
   }
 
   access, err_custom := callback(permission, context)

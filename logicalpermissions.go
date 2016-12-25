@@ -182,7 +182,7 @@ func (this *LogicalPermissions) checkAccess(permissions interface{}, context map
 }
 
 func (this *LogicalPermissions) getCorePermissionKeys() []string {
-  return []string{"no_bypass", "AND", "NAND", "OR", "NOR", "XOR", "NOT"}
+  return []string{"no_bypass", "AND", "NAND", "OR", "NOR", "XOR", "NOT", "TRUE", "FALSE"}
 }
 
 func (this *LogicalPermissions) preparePermissions(permissions interface{}) (map[string]interface{}, error) {

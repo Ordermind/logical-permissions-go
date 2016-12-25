@@ -23,7 +23,7 @@ import (
 
 func main() {
   lp := logicalpermissions.LogicalPermissions{}
-  
+
   //Helper function
   stringInSlice := func(a string, list []string) bool {
     for _, b := range list {
@@ -38,12 +38,12 @@ func main() {
   roleCallback := func(role string, context map[string]interface{}) (bool, error) {
     user, ok := context["user"]
     if !ok {
-      return false, nil 
+      return false, nil
     }
     if typed_user, ok := user.(map[string]interface{}); ok {
       roles, ok := typed_user["roles"]
       if !ok {
-        return false, nil 
+        return false, nil
       }
       if typed_roles, ok := roles.([]string); ok {
         has_role := stringInSlice(role, typed_roles)
@@ -57,12 +57,12 @@ func main() {
     fmt.Println(err)
     return
   }
-  
+
   user := map[string]interface{}{
     "id": 1,
     "roles": []string{"writer"},
   }
-  
+
   //Map example
   map_permissions := map[string]interface{}{
     "role": []string{"editor", "writer"},
@@ -73,7 +73,7 @@ func main() {
     return
   }
   fmt.Println("Access granted", access)
-  
+
   //JSON example
   json_permissions := `{
     "role": ["editor", "writer"]
@@ -103,7 +103,7 @@ In this example `role` and `flag` are the evaluated permission types. For this e
 ### Bypassing permissions
 This packages also supports rules for bypassing permissions completely for superusers. In order to use this functionality you need to register a callback with [`LogicalPermissions::SetBypassCallback()`](#setbypasscallback). The registered callback will run on every permission check and if it returns `true`, access will automatically be granted. If you want to make exceptions you can do so by adding `"no_bypass": true` to the first level of a permission tree. You can even use permissions as conditions for `no_bypass`.
 
-Examples: 
+Examples:
 
 ```go
 //Disallow access bypassing
@@ -226,7 +226,7 @@ is interpreted exactly the same way as this permission tree:
 
 A logic NOR gate returns true if all of its children returns false. Otherwise it returns false.
 
-Examples: 
+Examples:
 
 ```go
 //Allow access if the user is neither an editor nor a sales person
@@ -297,6 +297,59 @@ Examples:
 }`
 ```
 
+## Boolean Permissions
+
+Boolean permissions are a special kind of permission. They can be used for allowing or disallowing access for everyone (except those with bypass access). They are not allowed as descendants to a permission type and they may not contain children. Both real booleans and booleans represented as uppercase strings are supported. Of course a simpler way to allow access to everyone is to not define any permissions at all for that action, but it might be nice sometimes to explicitly allow access for everyone.
+
+Examples:
+
+```go
+//Allow access for anyone
+`[
+  true
+]`
+
+//Using a boolean without a slice/array is also permitted
+true
+```
+
+```go
+//Example with string representation
+`[
+  "TRUE"
+]`
+
+//Using a string representation without a slice/array is also permitted
+"TRUE"
+```
+
+```go
+//Deny access for everyone except those with bypass access
+`[
+  false
+]`
+
+//Using a boolean without a slice/array is also permitted
+false
+```
+
+```go
+//Example with string representation
+`[
+  "FALSE"
+]`
+
+//Using a string representation without a slice/array is also permitted
+"FALSE"
+```
+
+```go
+//Deny access for everyone including those with bypass access
+`{
+  "0": false,
+  "no_bypass": true
+}`
+```
 
 ## API Documentation
 ## Table of Contents
@@ -384,7 +437,7 @@ LogicalPermissions::TypeExists(name string) (bool, error)
 
 **Return Values:**
 
-- **true** if the type is found or **false** if the type isn't found.  
+- **true** if the type is found or **false** if the type isn't found.
 - **error** if something goes wrong, or **nil** if no error occurs.
 
 ---
@@ -408,7 +461,7 @@ LogicalPermissions::GetTypeCallback(name string) (func(string, map[string]interf
 
 **Return Values:**
 
-- **func(string, map[string]interface{}) (bool, error)** Callback for the permission type.  
+- **func(string, map[string]interface{}) (bool, error)** Callback for the permission type.
 - **error** if something goes wrong, or **nil** if no error occurs.
 
 ---
@@ -544,13 +597,13 @@ LogicalPermissions::CheckAccess(permissions interface{}, context map[string]inte
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
-| `permissions` | **map[string]interface{} or json string** | The permission tree to be evaluated. The permission tree can either be a map or a string containing a json object. |
+| `permissions` | **interface{}** | The permission tree to be evaluated. The permission tree can either be a map[string]interface{} or a string containing a json object. It also accepts a slice, a boolean string or a real boolean. |
 | `context` | **map[string]interface{}** | A context map that could for example contain the evaluated user and document. |
 
 
 **Return Values:**
 
-- **true** if access is granted or **false** if access is denied. If an error occurs, this value will always be **false**.  
+- **true** if access is granted or **false** if access is denied. If an error occurs, this value will always be **false**.
 - **error** if something goes wrong, or **nil** if no error occurs.
 
 
@@ -570,13 +623,13 @@ LogicalPermissions::CheckAccessNoBypass(permissions interface{}, context map[str
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
-| `permissions` | **map[string]interface{} or json string** | The permission tree to be evaluated. The permission tree can either be a map or a string containing a json object. |
+| `permissions` | **interface{}** | The permission tree to be evaluated. The permission tree can either be a map[string]interface{} or a string containing a json object. It also accepts a slice, a boolean string or a real boolean. |
 | `context` | **map[string]interface{}** | A context map that could for example contain the evaluated user and document. |
 
 
 **Return Values:**
 
-- **true** if access is granted or **false** if access is denied. If an error occurs, this value will always be **false**.  
+- **true** if access is granted or **false** if access is denied. If an error occurs, this value will always be **false**.
 - **error** if something goes wrong, or **nil** if no error occurs.
 
 

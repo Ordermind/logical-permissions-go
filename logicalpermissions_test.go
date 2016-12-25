@@ -394,10 +394,7 @@ func TestCheckAccessParamPermissionsWrongPermissionType(t *testing.T) {
   t.Parallel()
   lp := LogicalPermissions{}
 
-  permissions := []interface{}{
-    "test1",
-    "test2",
-  }
+  permissions := 50
   access, err := lp.CheckAccess(permissions, make(map[string]interface{}))
   assert.False(t, access)
   if assert.Error(t, err) {

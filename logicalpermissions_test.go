@@ -322,7 +322,7 @@ func TestGetValidPermissionKeys(t *testing.T) {
   lp := LogicalPermissions{}
   keys := lp.GetValidPermissionKeys()
   sort.Strings(keys)
-  keys2 := []string{"no_bypass", "AND", "NAND", "OR", "NOR", "XOR", "NOT", "TRUE", "FALSE"}
+  keys2 := []string{"NO_BYPASS", "AND", "NAND", "OR", "NOR", "XOR", "NOT", "TRUE", "FALSE"}
   sort.Strings(keys2)
   assert.Equal(t, keys, keys2)
   types := map[string]func(string, map[string]interface{}) (bool, error){
@@ -383,7 +383,7 @@ func TestGetValidPermissionKeys(t *testing.T) {
   assert.Nil(t, err)
   keys3 := lp.GetValidPermissionKeys()
   sort.Strings(keys3)
-  keys4 := []string{"no_bypass", "AND", "NAND", "OR", "NOR", "XOR", "NOT", "TRUE", "FALSE", "flag", "role", "misc"}
+  keys4 := []string{"NO_BYPASS", "AND", "NAND", "OR", "NOR", "XOR", "NOT", "TRUE", "FALSE", "flag", "role", "misc"}
   sort.Strings(keys4)
   assert.Equal(t, keys3, keys4)
 }
@@ -477,7 +477,7 @@ func TestCheckAccessParamPermissionsUnregisteredType(t *testing.T) {
   }
 }
 
-func TestCheckAccessEmptyDictAllow(t *testing.T) {
+func TestCheckAccessEmptyMapAllow(t *testing.T) {
   t.Parallel()
   lp := LogicalPermissions{}
 

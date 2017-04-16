@@ -16,7 +16,7 @@ func (this *LogicalPermissions) AddType(name string, callback func(string, map[s
   if name == "" {
     return &InvalidArgumentValueError{CustomError{"The name parameter cannot be empty."}}
   }
-  if this.stringInSlice(name, this.getCorePermissionKeys()) {
+  if this.stringInSlice(strings.ToUpper(name), this.getCorePermissionKeys()) {
     return &InvalidArgumentValueError{CustomError{fmt.Sprintf("The name parameter has the illegal value \"%s\". It cannot be one of the following values: %v", name, this.getCorePermissionKeys())}}
   }
   exists, _ := this.TypeExists(name)
@@ -97,7 +97,7 @@ func (this *LogicalPermissions) SetTypes(types map[string]func(string, map[strin
     if name == "" {
       return &InvalidArgumentValueError{CustomError{"The name for a type cannot be empty."}}
     }
-    if this.stringInSlice(name, this.getCorePermissionKeys()) {
+    if this.stringInSlice(strings.ToUpper(name), this.getCorePermissionKeys()) {
       return &InvalidArgumentValueError{CustomError{fmt.Sprintf("The name for a type has the illegal value \"%s\". It cannot be one of the following values: %v", name, this.getCorePermissionKeys())}}
     }
   }
@@ -152,16 +152,22 @@ func (this *LogicalPermissions) checkAccess(permissions interface{}, context map
     return false, err
   }
 
-  //Bypass access check
+  // uppercasing of no_bypass key for backward compatibility
   if no_bypass, ok := map_permissions["no_bypass"]; ok {
+    map_permissions["NO_BYPASS"] = no_bypass
+    delete(map_permissions, "no_bypass")
+  }
+
+  //Bypass access check
+  if no_bypass_upper, ok := map_permissions["NO_BYPASS"]; ok {
     if allow_bypass {
-      result, err_custom := this.checkAllowBypass(no_bypass, context)
+      result, err_custom := this.checkAllowBypass(no_bypass_upper, context)
       if err_custom != nil {
         return false, err_custom
       }
       allow_bypass = result
     }
-    delete(map_permissions, "no_bypass")
+    delete(map_permissions, "NO_BYPASS")
   }
   if allow_bypass {
     access, err_custom := this.checkBypassAccess(context)
@@ -188,7 +194,7 @@ func (this *LogicalPermissions) checkAccess(permissions interface{}, context map
 }
 
 func (this *LogicalPermissions) getCorePermissionKeys() []string {
-  return []string{"no_bypass", "AND", "NAND", "OR", "NOR", "XOR", "NOT", "TRUE", "FALSE"}
+  return []string{"NO_BYPASS", "AND", "NAND", "OR", "NOR", "XOR", "NOT", "TRUE", "FALSE"}
 }
 
 func (this *LogicalPermissions) preparePermissions(permissions interface{}) (map[string]interface{}, error) {
@@ -206,7 +212,7 @@ func (this *LogicalPermissions) preparePermissions(permissions interface{}) (map
     }
     json_permissions = string(tmpSlice)
   } else if tmpString, okString := interface{}(permissions).(string); okString {
-    if tmpString == "TRUE" || tmpString == "FALSE" {
+    if strings.ToUpper(tmpString) == "TRUE" || strings.ToUpper(tmpString) == "FALSE" {
       return map[string]interface{}{"OR": []interface{}{tmpString}}, nil
     }
     json_permissions = tmpString
@@ -234,7 +240,7 @@ func (this *LogicalPermissions) checkAllowBypass(no_bypass interface{}, context 
   if stringval, ok := no_bypass.(string); ok {
     no_bypass_upper := strings.ToUpper(stringval)
     if !this.stringInSlice(no_bypass_upper, []string{"TRUE", "FALSE"}) {
-      return false, &InvalidArgumentValueError{CustomError{fmt.Sprintf("The no_bypass value must be a boolean, a boolean string or a map. Current value: %v", no_bypass)}}
+      return false, &InvalidArgumentValueError{CustomError{fmt.Sprintf("The NO_BYPASS value must be a boolean, a boolean string or a map. Current value: %v", no_bypass)}}
     }
 
     if no_bypass_upper == "TRUE" {
@@ -247,12 +253,12 @@ func (this *LogicalPermissions) checkAllowBypass(no_bypass interface{}, context 
   if mapval, ok := no_bypass.(map[string]interface{}); ok {
     result, err_custom := this.processOR(mapval, "", context)
     if err_custom != nil {
-      err_custom.setMessage(fmt.Sprintf("Error checking no_bypass permissions: %s", err_custom.Error()))
+      err_custom.setMessage(fmt.Sprintf("Error checking NO_BYPASS permissions: %s", err_custom.Error()))
       return false, err_custom
     }
     return !result, nil
   }
-  return false, &InvalidArgumentValueError{CustomError{fmt.Sprintf("The no_bypass value must be a boolean, a boolean string or a map. Current value: %v", no_bypass)}}
+  return false, &InvalidArgumentValueError{CustomError{fmt.Sprintf("The NO_BYPASS value must be a boolean, a boolean string or a map. Current value: %v", no_bypass)}}
 }
 
 func (this *LogicalPermissions) checkBypassAccess(context map[string]interface{}) (bool, CustomErrorInterface) {
@@ -282,12 +288,12 @@ func (this *LogicalPermissions) dispatch(permissions interface{}, permtype strin
     }
   }
   if str_permissions, ok := permissions.(string); ok {
-    if str_permissions == "TRUE" {
+    if strings.ToUpper(str_permissions) == "TRUE" {
       if permtype != "" {
         return false, &InvalidArgumentValueError{CustomError{fmt.Sprintf("You cannot put a boolean permission as a descendant to a permission type. Existing type: %s. Evaluated permissions: %v", permtype, str_permissions)}}
       }
       return true, nil
-    } else if str_permissions == "FALSE" {
+    } else if strings.ToUpper(str_permissions) == "FALSE" {
       if permtype != "" {
         return false, &InvalidArgumentValueError{CustomError{fmt.Sprintf("You cannot put a boolean permission as a descendant to a permission type. Existing type: %s. Evaluated permissions: %v", permtype, str_permissions)}}
       }
@@ -318,55 +324,57 @@ func (this *LogicalPermissions) dispatch(permissions interface{}, permtype strin
         break
       }
       value := map_permissions[key]
-      if key == "no_bypass" {
-        return false, &InvalidArgumentValueError{CustomError{fmt.Sprintf("The no_bypass key must be placed highest in the permission hierarchy. Evaluated permissions: %v", map_permissions)}}
-      }
-      if key == "AND" {
-        access, err_custom := this.processAND(value, permtype, context)
-        if err_custom != nil {
-          return false, err_custom
-        }
-        return access, nil
-      }
-      if key == "NAND" {
-        access, err_custom := this.processNAND(value, permtype, context)
-        if err_custom != nil {
-          return false, err_custom
-        }
-        return access, nil
-      }
-      if key == "OR" {
-        access, err_custom := this.processOR(value, permtype, context)
-        if err_custom != nil {
-          return false, err_custom
-        }
-        return access, nil
-      }
-      if key == "NOR" {
-        access, err_custom := this.processNOR(value, permtype, context)
-        if err_custom != nil {
-          return false, err_custom
-        }
-        return access, nil
-      }
-      if key == "XOR" {
-        access, err_custom := this.processXOR(value, permtype, context)
-        if err_custom != nil {
-          return false, err_custom
-        }
-        return access, nil
-      }
-      if key == "NOT" {
-        access, err_custom := this.processNOT(value, permtype, context)
-        if err_custom != nil {
-          return false, err_custom
-        }
-        return access, nil
-      }
-      if key == "TRUE" || key == "FALSE" {
-        return false, &InvalidArgumentValueError{CustomError{fmt.Sprintf("A boolean permission cannot have children. Evaluated permissions: %v", map_permissions)}}
-      }
       if _, err := strconv.Atoi(key); err != nil {
+        key_upper := strings.ToUpper(key)
+        if key_upper == "NO_BYPASS" {
+          return false, &InvalidArgumentValueError{CustomError{fmt.Sprintf("The NO_BYPASS key must be placed highest in the permission hierarchy. Evaluated permissions: %v", map_permissions)}}
+        }
+        if key_upper == "AND" {
+          access, err_custom := this.processAND(value, permtype, context)
+          if err_custom != nil {
+            return false, err_custom
+          }
+          return access, nil
+        }
+        if key_upper == "NAND" {
+          access, err_custom := this.processNAND(value, permtype, context)
+          if err_custom != nil {
+            return false, err_custom
+          }
+          return access, nil
+        }
+        if key_upper == "OR" {
+          access, err_custom := this.processOR(value, permtype, context)
+          if err_custom != nil {
+            return false, err_custom
+          }
+          return access, nil
+        }
+        if key_upper == "NOR" {
+          access, err_custom := this.processNOR(value, permtype, context)
+          if err_custom != nil {
+            return false, err_custom
+          }
+          return access, nil
+        }
+        if key_upper == "XOR" {
+          access, err_custom := this.processXOR(value, permtype, context)
+          if err_custom != nil {
+            return false, err_custom
+          }
+          return access, nil
+        }
+        if key_upper == "NOT" {
+          access, err_custom := this.processNOT(value, permtype, context)
+          if err_custom != nil {
+            return false, err_custom
+          }
+          return access, nil
+        }
+        if key_upper == "TRUE" || key_upper == "FALSE" {
+          return false, &InvalidArgumentValueError{CustomError{fmt.Sprintf("A boolean permission cannot have children. Evaluated permissions: %v", map_permissions)}}
+        }
+
         if permtype != "" {
           return false, &InvalidArgumentValueError{CustomError{fmt.Sprintf("You cannot put a permission type as a descendant to another permission type. Existing type: %s. Evaluated permissions: %v", permtype, map_permissions)}}
         }

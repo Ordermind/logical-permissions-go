@@ -184,7 +184,7 @@ func (this *LogicalPermissions) checkAccess(permissions interface{}, context map
     return access, nil
   }
 
-  return false, nil
+  return true, nil
 }
 
 func (this *LogicalPermissions) getCorePermissionKeys() []string {

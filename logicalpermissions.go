@@ -4,6 +4,7 @@ import (
   "fmt"
   "encoding/json"
   "strconv"
+  "strings"
 )
 
 type LogicalPermissions struct {
@@ -15,10 +16,8 @@ func (this *LogicalPermissions) AddType(name string, callback func(string, map[s
   if name == "" {
     return &InvalidArgumentValueError{CustomError{"The name parameter cannot be empty."}}
   }
-  for _, v := range this.getCorePermissionKeys() {
-    if (v == name) {
-      return &InvalidArgumentValueError{CustomError{fmt.Sprintf("The name parameter has the illegal value \"%s\". It cannot be one of the following values: %v", name, this.getCorePermissionKeys())}}
-    }
+  if this.stringInSlice(name, this.getCorePermissionKeys()) {
+    return &InvalidArgumentValueError{CustomError{fmt.Sprintf("The name parameter has the illegal value \"%s\". It cannot be one of the following values: %v", name, this.getCorePermissionKeys())}}
   }
   exists, _ := this.TypeExists(name)
   if exists {
@@ -98,10 +97,8 @@ func (this *LogicalPermissions) SetTypes(types map[string]func(string, map[strin
     if name == "" {
       return &InvalidArgumentValueError{CustomError{"The name for a type cannot be empty."}}
     }
-    for _, v := range this.getCorePermissionKeys() {
-      if (v == name) {
-        return &InvalidArgumentValueError{CustomError{fmt.Sprintf("The name for a type has the illegal value \"%s\". It cannot be one of the following values: %v", name, this.getCorePermissionKeys())}}
-      }
+    if this.stringInSlice(name, this.getCorePermissionKeys()) {
+      return &InvalidArgumentValueError{CustomError{fmt.Sprintf("The name for a type has the illegal value \"%s\". It cannot be one of the following values: %v", name, this.getCorePermissionKeys())}}
     }
   }
 
@@ -138,6 +135,15 @@ func (this *LogicalPermissions) CheckAccess(permissions interface{}, context map
 
 func (this *LogicalPermissions) CheckAccessNoBypass(permissions interface{}, context map[string]interface{}) (bool, error) {
   return this.checkAccess(permissions, context, false)
+}
+
+func (this *LogicalPermissions) stringInSlice(a string, slice []string) bool {
+  for _, b := range slice {
+    if b == a {
+      return true
+    }
+  }
+  return false
 }
 
 func (this *LogicalPermissions) checkAccess(permissions interface{}, context map[string]interface{}, allow_bypass bool) (bool, error) {
@@ -225,6 +231,19 @@ func (this *LogicalPermissions) checkAllowBypass(no_bypass interface{}, context 
   if boolval, ok := no_bypass.(bool); ok {
     return !boolval, nil
   }
+  if stringval, ok := no_bypass.(string); ok {
+    no_bypass_upper := strings.ToUpper(stringval)
+    if !this.stringInSlice(no_bypass_upper, []string{"TRUE", "FALSE"}) {
+      return false, &InvalidArgumentValueError{CustomError{fmt.Sprintf("The no_bypass value must be a boolean, a boolean string or a map. Current value: %v", no_bypass)}}
+    }
+
+    if no_bypass_upper == "TRUE" {
+      return false, nil
+    }
+    if no_bypass_upper == "FALSE" {
+      return true, nil
+    }
+  }
   if mapval, ok := no_bypass.(map[string]interface{}); ok {
     result, err_custom := this.processOR(mapval, "", context)
     if err_custom != nil {
@@ -233,7 +252,7 @@ func (this *LogicalPermissions) checkAllowBypass(no_bypass interface{}, context 
     }
     return !result, nil
   }
-  return false, &InvalidArgumentValueError{CustomError{fmt.Sprintf("The no_bypass value must be a boolean or a map. Current value: %v", no_bypass)}}
+  return false, &InvalidArgumentValueError{CustomError{fmt.Sprintf("The no_bypass value must be a boolean, a boolean string or a map. Current value: %v", no_bypass)}}
 }
 
 func (this *LogicalPermissions) checkBypassAccess(context map[string]interface{}) (bool, CustomErrorInterface) {

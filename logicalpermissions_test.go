@@ -610,6 +610,40 @@ func TestCheckAccessNoBypassAccessBooleanDeny(t *testing.T) {
   assert.Nil(t, err)
 }
 
+func TestCheckAccessNoBypassAccessStringAllow(t *testing.T) {
+  t.Parallel()
+  lp := LogicalPermissions{}
+  bypass_callback := func(context map[string]interface{}) (bool, error) {
+    return true, nil
+  }
+  lp.SetBypassCallback(bypass_callback)
+  permissions := map[string]interface{}{
+    "no_bypass": "False",
+  }
+  access, err := lp.CheckAccess(permissions, make(map[string]interface{}))
+  assert.True(t, access)
+  assert.Nil(t, err)
+  //Test that permission object is not changed
+  _, ok := permissions["no_bypass"]
+  assert.True(t, ok)
+}
+
+func TestCheckAccessNoBypassAccessStringDeny(t *testing.T) {
+  t.Parallel()
+  lp := LogicalPermissions{}
+  bypass_callback := func(context map[string]interface{}) (bool, error) {
+    return true, nil
+  }
+  lp.SetBypassCallback(bypass_callback)
+  permissions := map[string]interface{}{
+    "no_bypass": "True",
+    "0": "FALSE",
+  }
+  access, err := lp.CheckAccess(permissions, make(map[string]interface{}))
+  assert.False(t, access)
+  assert.Nil(t, err)
+}
+
 func TestCheckAccessNoBypassAccessMapAllow(t *testing.T) {
   t.Parallel()
   lp := LogicalPermissions{}

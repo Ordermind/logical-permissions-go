@@ -1,33 +1,32 @@
 package logicalpermissions
 
 type CustomErrorInterface interface {
-  setMessage(msg string)
-  Error() string
+	setMessage(msg string)
+	Error() string
 }
 
 type CustomError struct {
-  msg string
+	msg string
 }
 
 func (this *CustomError) setMessage(msg string) {
-  this.msg = msg 
+	this.msg = msg
 }
 
 func (this *CustomError) Error() string { return this.msg }
 
 type InvalidArgumentValueError struct {
-  CustomError
+	CustomError
 }
 
 type InvalidValueForLogicGateError struct {
-  CustomError
+	CustomError
 }
 
 type PermissionTypeNotRegisteredError struct {
-  CustomError
+	CustomError
 }
 
 type PermissionTypeAlreadyExistsError struct {
-  CustomError
+	CustomError
 }
-

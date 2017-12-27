@@ -379,13 +379,13 @@ func (this *LogicalPermissions) dispatch(permissions interface{}, permtype strin
 					return false, &InvalidArgumentValueError{CustomError{fmt.Sprintf("You cannot put a permission type as a descendant to another permission type. Existing type: %s. Evaluated permissions: %v", permtype, map_permissions)}}
 				}
 
-        exists, err_custom := this.TypeExists(key)
-        if err_custom != nil {
-          return false, &CustomError{err_custom.Error()}
-        }
-        if !exists {
-          return false, &PermissionTypeNotRegisteredError{CustomError{fmt.Sprintf("The permission type \"%s\" has not been registered. Please use LogicalPermissions::AddType() or LogicalPermissions::SetTypes() to register permission types.", key)}}
-        }
+				exists, err_custom := this.TypeExists(key)
+				if err_custom != nil {
+					return false, &CustomError{err_custom.Error()}
+				}
+				if !exists {
+					return false, &PermissionTypeNotRegisteredError{CustomError{fmt.Sprintf("The permission type \"%s\" has not been registered. Please use LogicalPermissions::AddType() or LogicalPermissions::SetTypes() to register permission types.", key)}}
+				}
 
 				permtype = key
 			}

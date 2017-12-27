@@ -402,6 +402,12 @@ func TestCheckAccessParamPermissionsWrongPermissionType(t *testing.T) {
 		assert.IsType(t, &CustomError{}, err)
 	}
 
+	type_callback := func(string, map[string]interface{}) (bool, error) { return true, nil }
+	err = lp.AddType("flag", type_callback)
+	if err != nil {
+		t.Error(fmt.Sprintf("LogicalPermissions::AddType() returned an error: %s", err))
+	}
+
 	int_permissions := `{
     "flag": 1
   }`
@@ -436,6 +442,12 @@ func TestCheckAccessParamPermissionsWrongPermissionType(t *testing.T) {
 func TestCheckAccessParamPermissionsNestedTypes(t *testing.T) {
 	t.Parallel()
 	lp := LogicalPermissions{}
+
+	type_callback := func(string, map[string]interface{}) (bool, error) { return true, nil }
+	err := lp.AddType("flag", type_callback)
+	if err != nil {
+		t.Error(fmt.Sprintf("LogicalPermissions::AddType() returned an error: %s", err))
+	}
 
 	//Directly nested
 	permissions := `{
@@ -579,6 +591,11 @@ func TestCheckAccessNoBypassEmptyPermissionsAllow(t *testing.T) {
 func TestCheckAccessNoBypassWrongValue(t *testing.T) {
 	t.Parallel()
 	lp := LogicalPermissions{}
+	type_callback := func(string, map[string]interface{}) (bool, error) { return true, nil }
+	err := lp.AddType("test", type_callback)
+	if err != nil {
+		t.Error(fmt.Sprintf("LogicalPermissions::AddType() returned an error: %s", err))
+	}
 	bypass_callback := func(context map[string]interface{}) (bool, error) {
 		return true, nil
 	}
@@ -2420,6 +2437,12 @@ func TestCheckAccessBoolTRUEIllegalDescendant(t *testing.T) {
 	t.Parallel()
 	lp := LogicalPermissions{}
 
+	type_callback := func(string, map[string]interface{}) (bool, error) { return true, nil }
+	err := lp.AddType("role", type_callback)
+	if err != nil {
+		t.Error(fmt.Sprintf("LogicalPermissions::AddType() returned an error: %s", err))
+	}
+
 	map_permissions := map[string]interface{}{
 		"role": [1]interface{}{true},
 	}
@@ -2467,6 +2490,12 @@ func TestCheckAccessBoolTRUESlice(t *testing.T) {
 func TestCheckAccessBoolFALSEIllegalDescendant(t *testing.T) {
 	t.Parallel()
 	lp := LogicalPermissions{}
+
+	type_callback := func(string, map[string]interface{}) (bool, error) { return true, nil }
+	err := lp.AddType("role", type_callback)
+	if err != nil {
+		t.Error(fmt.Sprintf("LogicalPermissions::AddType() returned an error: %s", err))
+	}
 
 	map_permissions := map[string]interface{}{
 		"role": [1]interface{}{false},
@@ -2596,6 +2625,12 @@ func TestCheckAccessStringTRUEIllegalDescendant(t *testing.T) {
 	t.Parallel()
 	lp := LogicalPermissions{}
 
+	type_callback := func(string, map[string]interface{}) (bool, error) { return true, nil }
+	err := lp.AddType("role", type_callback)
+	if err != nil {
+		t.Error(fmt.Sprintf("LogicalPermissions::AddType() returned an error: %s", err))
+	}
+
 	map_permissions := map[string]interface{}{
 		"role": [1]interface{}{"TRUE"},
 	}
@@ -2686,6 +2721,12 @@ func TestCheckAccessStringFALSEIllegalChildren(t *testing.T) {
 func TestCheckAccessStringFALSEIllegalDescendant(t *testing.T) {
 	t.Parallel()
 	lp := LogicalPermissions{}
+
+	type_callback := func(string, map[string]interface{}) (bool, error) { return true, nil }
+	err := lp.AddType("role", type_callback)
+	if err != nil {
+		t.Error(fmt.Sprintf("LogicalPermissions::AddType() returned an error: %s", err))
+	}
 
 	map_permissions := map[string]interface{}{
 		"role": [1]interface{}{"FALSE"},

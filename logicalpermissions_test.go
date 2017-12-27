@@ -176,7 +176,9 @@ func TestGetTypeCallback(t *testing.T) {
 	if err2 != nil {
 		t.Error(fmt.Sprintf("LogicalPermissions::GetTypeCallback() returned an error: %s", err2))
 	}
-	assert.Equal(t, fmt.Sprintf("%v", callback1), fmt.Sprintf("%v", callback2))
+	callback1_sig = fmt.Sprintf("%v", callback1)
+  callback2_sig = fmt.Sprintf("%v", callback2)
+	assert.Equal(t, callback1_sig, callback2_sig)
 }
 
 /*-------------LogicalPermissions::SetTypeCallback()--------------*/

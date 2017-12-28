@@ -2669,9 +2669,11 @@ func TestCheckAccessStringTRUESlice(t *testing.T) {
 	assert.True(t, access)
 	assert.Nil(t, err)
 
-	json_permissions := `[
+	json_permissions := `
+	[
     "TRUE"
-  ]`
+  ]
+  `
 	access, err = lp.CheckAccess(json_permissions, make(map[string]interface{}))
 	assert.True(t, access)
 	assert.Nil(t, err)

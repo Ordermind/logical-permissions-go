@@ -212,10 +212,11 @@ func (this *LogicalPermissions) preparePermissions(permissions interface{}) (map
 		}
 		json_permissions = string(tmpSlice)
 	} else if tmpString, okString := interface{}(permissions).(string); okString {
-		if strings.ToUpper(tmpString) == "TRUE" || strings.ToUpper(tmpString) == "FALSE" {
-			return map[string]interface{}{"OR": []interface{}{tmpString}}, nil
+    trimmed_permissions := strings.TrimSpace(tmpString)
+		if strings.ToUpper(trimmed_permissions) == "TRUE" || strings.ToUpper(trimmed_permissions) == "FALSE" {
+			return map[string]interface{}{"OR": []interface{}{trimmed_permissions}}, nil
 		}
-		json_permissions = strings.TrimSpace(tmpString)
+		json_permissions = trimmed_permissions
 	} else if tmpBool, okBool := interface{}(permissions).(bool); okBool {
 		return map[string]interface{}{"OR": []interface{}{tmpBool}}, nil
 	} else {

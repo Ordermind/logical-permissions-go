@@ -2654,7 +2654,9 @@ func TestCheckAccessStringTRUE(t *testing.T) {
 	t.Parallel()
 	lp := LogicalPermissions{}
 
-	str_permissions := "TRUE"
+	str_permissions := `
+	TRUE
+	`
 	access, err := lp.CheckAccess(str_permissions, make(map[string]interface{}))
 	assert.True(t, access)
 	assert.Nil(t, err)

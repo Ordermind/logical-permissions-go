@@ -176,7 +176,7 @@ func TestGetTypeCallback(t *testing.T) {
 	if err2 != nil {
 		t.Error(fmt.Sprintf("LogicalPermissions::GetTypeCallback() returned an error: %s", err2))
 	}
-	assert.Equal(t, fmt.Sprintf("%v", callback1), fmt.Sprintf("%v", callback2))
+	assert.Equal(t, fmt.Sprintf("%p", callback1), fmt.Sprintf("%p", callback2))
 }
 
 /*-------------LogicalPermissions::SetTypeCallback()--------------*/
@@ -215,7 +215,7 @@ func TestSetTypeCallback(t *testing.T) {
 		t.Error(fmt.Sprintf("LogicalPermissions::GetTypeCallback() returned an error: %s", err2))
 	}
 
-	assert.NotEqual(t, fmt.Sprintf("%v", callback), fmt.Sprintf("%v", callback2))
+	assert.NotEqual(t, fmt.Sprintf("%p", callback), fmt.Sprintf("%p", callback2))
 
 	err3 := lp.SetTypeCallback("test", callback)
 	if err3 != nil {
@@ -226,7 +226,7 @@ func TestSetTypeCallback(t *testing.T) {
 	if err4 != nil {
 		t.Error(fmt.Sprintf("LogicalPermissions::GetTypeCallback() returned an error: %s", err4))
 	}
-	assert.Equal(t, fmt.Sprintf("%v", callback), fmt.Sprintf("%v", callback3))
+	assert.Equal(t, fmt.Sprintf("%p", callback), fmt.Sprintf("%p", callback3))
 }
 
 /*-------------LogicalPermissions::GetTypes()--------------*/
@@ -313,7 +313,7 @@ func TestSetBypassCallback(t *testing.T) {
 		return true, nil
 	}
 	lp.SetBypassCallback(callback)
-	assert.Equal(t, fmt.Sprintf("%v", callback), fmt.Sprintf("%v", lp.GetBypassCallback()))
+	assert.Equal(t, fmt.Sprintf("%p", callback), fmt.Sprintf("%p", lp.GetBypassCallback()))
 }
 
 /*------------LogicalPermissions::getValidPermissionKeys()------------*/

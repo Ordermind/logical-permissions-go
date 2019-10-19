@@ -1,7 +1,7 @@
 <a href="https://travis-ci.org/ordermind/logical-permissions-go" target="_blank"><img src="https://travis-ci.org/ordermind/logical-permissions-go.svg?branch=master" /></a>
 # logical-permissions
 
-This is a generic library that provides support for map- or json-based permissions with logic gates such as AND and OR. You can register any kind of permission types such as roles and flags. The idea with this library is to be an ultra-flexible foundation that can be used by any framework. It supports go v1.2 and above.
+This is a generic library that provides support for map- or json-based permissions with logic gates such as AND and OR. You can register any kind of permission types such as roles and flags. The idea with this library is to be an ultra-flexible foundation that can be used by any framework. It supports go v1.3 and above.
 
 ## Getting started
 
